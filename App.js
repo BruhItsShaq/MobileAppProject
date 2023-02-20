@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { View, StyleSheet } from 'react-native';
 
 import LoginScreen from './components/login';
-
+import SignUp from './components/signUp';
 
 export default class App extends Component {
   constructor(props){
@@ -12,9 +12,9 @@ export default class App extends Component {
   render(){
     return (
       <View style={styles.container}>
-        <LoginScreen />
+        {/* <LoginScreen /> */}
+        <SignUp />
       </View>
-      // <FlatListDemo />
     )
   }
 }
