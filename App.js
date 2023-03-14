@@ -1,29 +1,23 @@
 import React, { Component } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
+
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { NavigationContainer } from '@react-navigation/native';
 
 import LoginScreen from './components/login';
-import SignUp from './components/signUp';
+// import SignUp from './components/signUp';
 
-export default class App extends Component {
-  constructor(props){
-    super(props);//comment
-  }
+const Stack = createNativeStackNavigator();
 
+export default class App extends Component{
   render(){
     return (
-      <View style={styles.container}>
-        {/* <LoginScreen /> */}
-        <SignUp />
-      </View>
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName='Login'>
+           <Stack.Screen name="Login" component={LoginScreen}/>
+           {/* <Stack.Screen name="SignUp" component={SignUp} /> */}
+         </Stack.Navigator>
+      </NavigationContainer>
     )
   }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

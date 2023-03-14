@@ -59,6 +59,8 @@ export default class SignUp extends Component {
 
         console.log("Button clicked: " + this.state.firstName + " " + this.state.lastName + " " + this.state.password + " " + this.state.email)
         //Enter API code here
+
+        
     }
 
     render() {
