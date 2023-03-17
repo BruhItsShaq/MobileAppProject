@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-
 import * as EmailValidator from 'email-validator';
-import { render } from 'react-dom';
 
 export default class SignUp extends Component {
 
@@ -21,23 +19,29 @@ export default class SignUp extends Component {
         this._onButtonPress = this._onButtonPress.bind(this)
     }
 
-    _onButtonPress = () => {
+    navigateToLogin = () => {
+        this.props.navigation.navigate('Login');
+    }
+
+    _onButtonPress = async () => {
         this.setState({ submitted: true })
         this.setState({ error: "" })
 
-        const NAME_REGEX = new RegExp(/^[a-zA-Z]{2,20}( [a-zA-Z]{2,40})+$;/)
+        const FIRST_NAME_REGEX = new RegExp(/^[a-zA-Z]{2,20}$/);
+        const LAST_NAME_REGEX = new RegExp(/^[a-zA-Z]{2,40}$/);
+        
         if (!(this.state.firstName && this.state.lastName)) {
             this.setState({ error: "Please enter a first and last name" })
             return;
         }
 
-        if (!NAME_REGEX.test(this.state.firstName)) {
-            this.setState({ error: "First name must not contain special characters or might to short/long" })
+        if (!FIRST_NAME_REGEX.test(this.state.firstName)) {
+            this.setState({ error: "First name must not contain special characters or might be too short/long" })
             return;
         }
-
-        if (!NAME_REGEX.test(this.state.lastName)) {
-            this.setState({ error: "Last name must not contain special characters or might to short/long" })
+        
+        if (!LAST_NAME_REGEX.test(this.state.lastName)) {
+            this.setState({ error: "Last name must not contain special characters or might be too short/long" })
             return;
         }
 
@@ -58,10 +62,37 @@ export default class SignUp extends Component {
         }
 
         console.log("Button clicked: " + this.state.firstName + " " + this.state.lastName + " " + this.state.password + " " + this.state.email)
-        //Enter API code here
 
-        
+        const requestBody = {
+            first_name: this.state.firstName,
+            last_name: this.state.lastName,
+            email: this.state.email,
+            password: this.state.password,
+        };
+
+        try {
+            const response = await fetch(`http://localhost:3333/api/1.0.0/user`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody),
+            });
+            if (response.status === 201) {
+                const data = await response.json();
+                console.log('User created successfully', data);
+                this.props.navigation.navigate('Login');
+            } else {
+                const errorData = await response.json();
+                console.error('Error creating user', errorData);
+                this.setState({ error: 'An error occurred while creating your account. Please try again.' });
+            }
+        } catch (error) {
+            console.error('Error creating user', error);
+            this.setState({ error: 'An error occurred while creating your account. Please try again.' });
+        }
     }
+
 
     render() {
         return (
@@ -147,15 +178,17 @@ export default class SignUp extends Component {
                     </>
 
                     <View>
-                        <Text style={styles.signup}>Already have an account? Login</Text>
+                        <Text style={styles.signup} onPress={this.navigateToLogin}>
+                            Already have an account? Login
+                        </Text>
                     </View>
                 </View>
             </View>
         )
     }
-
-
 }
+
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,

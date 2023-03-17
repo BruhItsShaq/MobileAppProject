@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as EmailValidator from 'email-validator';
 
 export default class LoginScreen extends Component {
@@ -17,7 +17,11 @@ export default class LoginScreen extends Component {
         this._onPressButton = this._onPressButton.bind(this)
     }
 
-    _onPressButton() {
+    navigateToSignUp = () => {
+        this.props.navigation.navigate('SignUp');
+    }
+
+    async _onPressButton() {
         this.setState({ submitted: true })
         this.setState({ error: "" })
 
@@ -37,11 +41,37 @@ export default class LoginScreen extends Component {
             return;
         }
 
+        const requestBody = {
+            email: this.state.email,
+            password: this.state.password,
+        };
 
-        console.log("Button clicked: " + this.state.email + " " + this.state.password)
-        console.log("Validated and ready to send to the API")
+        try {
+            const response = await fetch('http://localhost:3333/api/1.0.0/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody),
+            });
 
+            if (response.status === 200) {
+                const data = await response.json();
+                await AsyncStorage.setItem('session_token', data.session_token);
+                console.log('Login successful', data);
+                // Navigate to your desired screen after a successful login
+                this.props.navigation.navigate('YourScreen');
+            } else {
+                const errorData = await response.json();
+                console.error('Error logging in', errorData);
+                this.setState({ error: 'Invalid email or password.' });
+            }
+        } catch (error) {
+            console.error('Error logging in', error);
+            this.setState({ error: 'An error occurred while logging in. Please try again.' });
+        }
     }
+
 
     render() {
         return (
@@ -96,14 +126,21 @@ export default class LoginScreen extends Component {
                     </>
 
                     <View>
-                        <Text style={styles.signup}>Need an account?</Text>
-                    </View>
+                    <Text style={styles.signup} onPress={this.navigateToSignUp}>
+                        Need an account?
+                    </Text>
+                </View>
                 </View>
             </View>
         )
     }
 
 }
+
+
+
+
+
 
 const styles = StyleSheet.create({
     container: {
