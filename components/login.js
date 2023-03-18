@@ -56,15 +56,35 @@ export default class LoginScreen extends Component {
             });
 
             if (response.status === 200) {
+
                 const data = await response.json();
-                await AsyncStorage.setItem('session_token', data.session_token);
-                console.log('Login successful', data);
-                // Navigate to your desired screen after a successful login
-                this.props.navigation.navigate('YourScreen');
+                console.log('Login response data:', data);
+                const session_token = data.token;
+
+                if (!session_token) {
+                    console.error('Session token not found in response data');
+                    this.setState({ error: 'An error occurred while logging in. Please try again.' });
+                    return;
+                }
+
+                try {
+                    await AsyncStorage.setItem('session_token', session_token);
+                    console.log('Session token saved:', session_token);
+                } catch (error) {
+                    console.error('Error saving session token', error);
+                    this.setState({ error: 'An error occurred while logging in. Please try again.' });
+                    return;
+                }
+
+                this.props.navigation.navigate('Main');
+
+            } else if (response.status === 400) {
+                console.error('Error logging in: Invalid email or password');
+                this.setState({ error: 'Invalid email or password.' });
             } else {
                 const errorData = await response.json();
                 console.error('Error logging in', errorData);
-                this.setState({ error: 'Invalid email or password.' });
+                this.setState({ error: 'An error occurred while logging in. Please try again.' });
             }
         } catch (error) {
             console.error('Error logging in', error);
@@ -126,10 +146,10 @@ export default class LoginScreen extends Component {
                     </>
 
                     <View>
-                    <Text style={styles.signup} onPress={this.navigateToSignUp}>
-                        Need an account?
-                    </Text>
-                </View>
+                        <Text style={styles.signup} onPress={this.navigateToSignUp}>
+                            Need an account?
+                        </Text>
+                    </View>
                 </View>
             </View>
         )

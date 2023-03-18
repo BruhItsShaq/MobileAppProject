@@ -61,8 +61,6 @@ export default class SignUp extends Component {
             return;
         }
 
-        console.log("Button clicked: " + this.state.firstName + " " + this.state.lastName + " " + this.state.password + " " + this.state.email)
-
         const requestBody = {
             first_name: this.state.firstName,
             last_name: this.state.lastName,
