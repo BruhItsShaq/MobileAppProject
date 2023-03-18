@@ -3,7 +3,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
-
+import HomeScreen from './components/homeScreen';
+import ProfileScreen from './components/profileScreen';
+import ContactsScreen from './components/contactsScreen';
 import LoginScreen from './components/login';
 import SignUp from './components/signUp';
 
