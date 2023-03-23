@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import { fetchChats } from '../services/chatRequests';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Modal, TextInput, Button } from 'react-native';
+import { fetchChats, createChat } from '../services/chatRequests';
 
 export default class HomeScreen extends Component {
     constructor(props) {
@@ -10,6 +10,8 @@ export default class HomeScreen extends Component {
             chats: [],
             search: '',
             error: '',
+            isModalVisible: false,
+            newChatName: '',
         };
     }
 
@@ -31,8 +33,36 @@ export default class HomeScreen extends Component {
         console.log('Chat pressed:', chat_id);
     };
 
+    toggleModal = () => {
+        this.setState((prevState) => ({ isModalVisible: !prevState.isModalVisible }));
+    };
+
+    handleNewChatNameChange = (text) => {
+        this.setState({ newChatName: text });
+    };
+
+    handleCreateChat = async () => {
+        const { newChatName } = this.state;
+        if (!newChatName) {
+            this.setState({ error: 'Please enter a chat name' });
+            return;
+        }
+
+        try {
+            const chatResponse = await createChat(newChatName);
+            const newChat = { chat_id: chatResponse.chat_id, name: newChatName };
+            this.setState((prevState) => ({
+                chats: [newChat, ...prevState.chats],
+                newChatName: '',
+                isModalVisible: false,
+            }));
+        } catch (error) {
+            this.setState({ error: error.message });
+        }
+    };
+
     render() {
-        const { chats, error } = this.state;
+        const { chats, error, isModalVisible, newChatName } = this.state;
 
         return (
             <View style={styles.container}>
@@ -52,11 +82,54 @@ export default class HomeScreen extends Component {
                         </View>
                     }
                 />
-                {error && (
-                    <View>
-                        <Text style={styles.errorText}>{error}</Text>
+
+                <>
+                    {error && (
+                        <View>
+                            <Text style={styles.errorText}>{error}</Text>
+                        </View>
+                    )}
+                </>
+
+                <TouchableOpacity style={styles.addButton} onPress={this.toggleModal}>
+                    {/* <Text style={styles.addButtonText}>Create Chat</Text> */}
+                </TouchableOpacity>
+
+                {/* Modal */}
+                <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={isModalVisible}
+                    onRequestClose={this.toggleModal}
+                >
+                    <View style={styles.centeredView}>
+                        <View style={styles.modalView}>
+                            <Text style={styles.modalTitle}>Create New Chat</Text>
+                            <TextInput
+                                style={styles.modalInput}
+                                placeholder="Enter chat name"
+                                value={newChatName}
+                                onChangeText={this.handleNewChatNameChange}
+                            />
+                            <View style={styles.modalButtonsContainer}>
+                                <Button title="Cancel" onPress={this.toggleModal} />
+                                <Button title="Create" onPress={this.handleCreateChat} />
+                            </View>
+                        </View>
                     </View>
-                )}
+                </Modal>
+
+
+                {/* Floating Button */}
+                <TouchableOpacity
+                    activeOpacity={0.7}
+                    style={styles.floatingButton}
+                    onPress={this.toggleModal}
+                >
+                    <Text style={styles.floatingButtonText}>+</Text>
+                </TouchableOpacity>
+
+
             </View>
         );
     }
@@ -90,4 +163,59 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginTop: 20,
     },
+    centeredView: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        marginTop: 22
+    },
+    modalView: {
+        margin: 20,
+        backgroundColor: "white",
+        borderRadius: 20,
+        padding: 35,
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5
+    },
+    modalTitle: {
+        marginBottom: 15,
+        textAlign: "center",
+        fontSize: 20,
+        fontWeight: "bold"
+    },
+    modalInput: {
+        height: 40,
+        width: '100%',
+        marginBottom: 20,
+        borderColor: 'gray',
+        borderWidth: 1,
+        padding: 10
+    },
+    modalButtonsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%'
+    },
+    floatingButton: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        backgroundColor: '#0084ff',
+        position: 'absolute',
+        bottom: 20,
+        right: 20,
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    floatingButtonText: {
+        fontSize: 30,
+        color: '#FFF'
+    }
 });

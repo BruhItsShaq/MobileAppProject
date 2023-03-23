@@ -76,7 +76,7 @@ export default class LoginScreen extends Component {
                     return;
                 }
 
-                this.props.navigation.navigate('Main');
+                this.props.navigation.navigate('Home');
 
             } else if (response.status === 400) {
                 console.error('Error logging in: Invalid email or password');

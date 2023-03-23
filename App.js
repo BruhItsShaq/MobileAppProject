@@ -15,9 +15,9 @@ const Tab = createBottomTabNavigator();
 function MainTabs() {
   return (
     <Tab.Navigator>
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
-      <Tab.Screen name="Contacts" component={ContactsScreen} />
+      <Tab.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+      <Tab.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }} />
+      <Tab.Screen name="Contacts" component={ContactsScreen} options={{ headerShown: false }} />
     </Tab.Navigator>
   );
 }
@@ -29,7 +29,7 @@ export default class App extends Component{
         <Stack.Navigator initialRouteName='Login'>
            <Stack.Screen name="Login" component={LoginScreen}/>
            <Stack.Screen name="SignUp" component={SignUp} />
-           <Stack.Screen name="Main" component={MainTabs} />
+           <Stack.Screen name="Home" component={MainTabs} />
          </Stack.Navigator>
       </NavigationContainer>
     )
