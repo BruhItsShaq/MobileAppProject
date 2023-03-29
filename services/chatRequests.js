@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const fetchChats = async () => {
     const session_token = await AsyncStorage.getItem('session_token');
+    const u_id = await AsyncStorage.getItem('user_id');
     console.log('Session token retrieved:', session_token);
     try {
         const response = await fetch('http://localhost:3333/api/1.0.0/chat', {

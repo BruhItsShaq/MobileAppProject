@@ -60,6 +60,7 @@ export default class LoginScreen extends Component {
                 const data = await response.json();
                 console.log('Login response data:', data);
                 const session_token = data.token;
+                const u_id = data.id;
 
                 if (!session_token) {
                     console.error('Session token not found in response data');
@@ -69,7 +70,9 @@ export default class LoginScreen extends Component {
 
                 try {
                     await AsyncStorage.setItem('session_token', session_token);
+                    await AsyncStorage.setItem('user_id', u_id.toString());
                     console.log('Session token saved:', session_token);
+                    console.log('User ID saved: ', u_id);
                 } catch (error) {
                     console.error('Error saving session token', error);
                     this.setState({ error: 'An error occurred while logging in. Please try again.' });

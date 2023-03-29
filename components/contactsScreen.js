@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { fetchContacts } from '../services/contactRequests';
+import { getContacts } from '../services/contactRequests';
 
 export default class ContactsScreen extends Component {
   constructor(props) {
@@ -18,7 +18,7 @@ export default class ContactsScreen extends Component {
 
   loadContacts = async () => {
     try {
-      const contactData = await fetchContacts();
+      const contactData = await getContacts();
       this.setState({ contacts: contactData });
     } catch (error) {
       this.setState({ error: error.message });
