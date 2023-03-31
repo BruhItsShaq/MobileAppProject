@@ -1,6 +1,17 @@
 import React, { Component } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { getContacts } from '../services/contactRequests';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  Modal,
+  Alert,
+  FlatList,
+} from 'react-native';
+import { getContacts, addContact, blockContact } from '../services/contactRequests';
+import { MaterialIcons, AntDesign } from '@expo/vector-icons';
+
 
 export default class ContactsScreen extends Component {
   constructor(props) {
@@ -9,12 +20,21 @@ export default class ContactsScreen extends Component {
     this.state = {
       contacts: [],
       error: '',
+      modalVisible: false,
+      newContactId: '',
     };
   }
 
   componentDidMount() {
-    this.loadContacts();
+    this._unsubscribe = this.props.navigation.addListener('focus', () => {
+      this.loadContacts();
+    });
   }
+
+  componentWillUnmount() {
+    this._unsubscribe();
+  }
+
 
   loadContacts = async () => {
     try {
@@ -25,21 +45,57 @@ export default class ContactsScreen extends Component {
     }
   };
 
+  handleAddContact = async () => {
+    const { newContactId } = this.state;
+    try {
+      await addContact(newContactId);
+      Alert.alert('Success', 'Contact added successfully.');
+      this.setState({ modalVisible: false, newContactId: '' }, this.loadContacts);
+    } catch (error) {
+      Alert.alert('Error', error.message);
+    }
+  };
+
+  handleBlockContact = async (user_id) => {
+    try {
+      await blockContact(user_id);
+      Alert.alert('Success', 'Contact blocked successfully.');
+      this.loadContacts();
+    } catch (error) {
+      Alert.alert('Error', error.message);
+    }
+  };
+
+  renderItem = ({ item }) => {
+    return (
+      <View style={styles.contactItem}>
+        <Text>
+          {item.first_name} {item.last_name}
+        </Text>
+        <View style={styles.contactButtons}>
+          <TouchableOpacity onPress={() => this.handleBlockContact(item.user_id)}>
+            <AntDesign name="stop" size={24} color="red" />
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <MaterialIcons name="delete" size={24} color="black" />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
+
   render() {
-    const { contacts, error } = this.state;
+    const { contacts, error, modalVisible, newContactId } = this.state;
 
     return (
       <View style={styles.container}>
         <Text style={styles.title}>Contacts</Text>
-        {Array.isArray(contacts) && contacts.length > 0 ? (
-          contacts.map((contact) => (
-            <Text key={contact.user_id} style={styles.text}>
-              {contact.first_name} {contact.last_name} - {contact.email}
-            </Text>
-          ))
-        ) : (
-          <Text style={styles.text}>No contacts found</Text>
-        )}
+        <FlatList
+          data={contacts}
+          renderItem={this.renderItem}
+          keyExtractor={(item) => item.user_id.toString()}
+          ListEmptyComponent={<Text style={styles.text}>No contacts found</Text>}
+        />
         <>
           {error && (
             <View>
@@ -47,6 +103,37 @@ export default class ContactsScreen extends Component {
             </View>
           )}
         </>
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => this.setState({ modalVisible: true })}
+        >
+          <MaterialIcons name="add" size={30} color="white" />
+        </TouchableOpacity>
+        <Modal animationType="slide" transparent={true} visible={modalVisible}>
+          <View style={styles.modalView}>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter user ID"
+              value={newContactId}
+              onChangeText={(text) => this.setState({ newContactId: text })}
+              keyboardType="numeric"
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.button} onPress={this.handleAddContact}>
+                <Text style={styles.buttonText}>Add Contact</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, { backgroundColor: 'gray' }]}
+                onPress={() => this.setState({ modalVisible: false })}
+              >
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+        <TouchableOpacity style={styles.blockedContactsButton} onPress={() => { this.props.navigation.navigate('Blocked') }}>
+          <AntDesign name="lock" size={24} color="black" />
+        </TouchableOpacity>
       </View>
     );
   }
@@ -74,5 +161,63 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginTop: 20,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: 'blue',
+    borderRadius: 30,
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalView: {
+    backgroundColor: 'white',
+    padding: 20,
+    marginTop: 'auto',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: 'black',
+    width: '100%',
+    marginBottom: 10,
+    padding: 10,
+  },
+  button: {
+    backgroundColor: 'blue',
+    padding: 10,
+    borderRadius: 5,
+    margin: 5,
+  },
+  buttonText: {
+    color: 'white',
+    textAlign: 'center',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  contactItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderColor: '#eee',
+  },
+  contactButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: 60,
+  },
+  blockedContactsButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
   },
 });
