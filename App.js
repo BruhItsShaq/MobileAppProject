@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
+import ChatScreen from './components/chatScreen';
 import HomeScreen from './components/homeScreen';
 import ProfileScreen from './components/profileScreen';
 import ContactsScreen from './components/contactsScreen';
@@ -12,6 +13,15 @@ import SignUp from './components/signUp';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+
+function HomeStack() {
+  return (
+    <Stack.Navigator initialRouteName="Home">
+      <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
+    </Stack.Navigator>
+  );
+}
 
 function ContactsStack() {
   return (
@@ -25,7 +35,7 @@ function ContactsStack() {
 function MainTabs() {
   return (
     <Tab.Navigator>
-      <Tab.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+      <Tab.Screen name="Home" component={HomeStack} options={{ headerShown: false }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }} />
       <Tab.Screen name="Contacts" component={ContactsStack} options={{ headerShown: false }} />
     </Tab.Navigator>
