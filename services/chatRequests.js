@@ -145,40 +145,123 @@ export const getChatDetails = async (chat_id, limit = 20, offset = 0) => {
 
 export const sendMessage = async (chat_id, message) => {
     const session_token = await AsyncStorage.getItem('session_token');
-  
+
     try {
-      const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}/message`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Authorization': session_token,
-        },
-        body: JSON.stringify({ message }),
-      });
-  
-      if (response.status === 200) {
-        const data = await response.text();
-        await getChatDetails(chat_id);
-        return data;
-      } else if (response.status === 400) {
-        const errorData = await response.text();
-        console.error('Bad request', errorData);
-        throw new Error('Bad request. Please try again.');
-      } else if (response.status === 401) {
-        const errorData = await response.text();
-        console.error('Unauthorised', errorData);
-        throw new Error('Unauthorised. Please log in and try again.');
-      } else if (response.status === 403) {
-        const errorData = await response.text();
-        console.error('Forbidden', errorData);
-        throw new Error('Forbidden. You do not have permission to send messages to this chat.');
-      } else {
-        const errorData = await response.text();
-        console.error('Server error', errorData);
-        throw new Error('Server error. Please try again later.');
-      }
+        const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}/message`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Authorization': session_token,
+            },
+            body: JSON.stringify({ message }),
+        });
+
+        if (response.status === 200) {
+            const data = await response.text();
+            await getChatDetails(chat_id);
+            return data;
+        } else if (response.status === 400) {
+            const errorData = await response.text();
+            console.error('Bad request', errorData);
+            throw new Error('Bad request. Please try again.');
+        } else if (response.status === 401) {
+            const errorData = await response.text();
+            console.error('Unauthorised', errorData);
+            throw new Error('Unauthorised. Please log in and try again.');
+        } else if (response.status === 403) {
+            const errorData = await response.text();
+            console.error('Forbidden', errorData);
+            throw new Error('Forbidden. You do not have permission to send messages to this chat.');
+        } else {
+            const errorData = await response.text();
+            console.error('Server error', errorData);
+            throw new Error('Server error. Please try again later.');
+        }
     } catch (error) {
-      console.error('Error sending message', error);
-      throw new Error('An error occurred while sending the message. Please try again.');
+        console.error('Error sending message', error);
+        throw new Error('An error occurred while sending the message. Please try again.');
     }
-  };
+};
+
+export const deleteMessage = async (chat_id, message_id) => {
+    const session_token = await AsyncStorage.getItem('session_token');
+
+    try {
+        const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}/message/${message_id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Authorization': session_token,
+            },
+        });
+
+        if (response.status === 200) {
+            const data = await response.text();
+            await getChatDetails(chat_id);
+            return data;
+        } else if (response.status === 401) {
+            const errorData = await response.text();
+            console.error('Unauthorised', errorData);
+            throw new Error('Unauthorised. Please log in and try again.');
+        } else if (response.status === 403) {
+            const errorData = await response.text();
+            console.error('Forbidden', errorData);
+            throw new Error('Forbidden. You do not have permission to delete messages in this chat.');
+        } else if (response.status === 404) {
+            const errorData = await response.text();
+            console.error('Not Found', errorData);
+            throw new Error('Message not found. Please try again.');
+        } else {
+            const errorData = await response.text();
+            console.error('Server error', errorData);
+            throw new Error('Server error. Please try again later.');
+        }
+    } catch (error) {
+        console.error('Error deleting message', error);
+        throw new Error('An error occurred while deleting the message. Please try again.');
+    }
+};
+
+export const updateMessage = async (chat_id, message_id, message) => {
+    const session_token = await AsyncStorage.getItem('session_token');
+
+    try {
+        const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}/message/${message_id}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Authorization': session_token,
+            },
+            body: JSON.stringify({ message }),
+        });
+
+        if (response.status === 200) {
+            const data = await response.text();
+            await getChatDetails(chat_id);
+            return data;
+        } else if (response.status === 400) {
+            const errorData = await response.text();
+            console.error('Bad request', errorData);
+            throw new Error('Bad request. Please try again.');
+        } else if (response.status === 401) {
+            const errorData = await response.text();
+            console.error('Unauthorised', errorData);
+            throw new Error('Unauthorised. Please log in and try again.');
+        } else if (response.status === 403) {
+            const errorData = await response.text();
+            console.error('Forbidden', errorData);
+            throw new Error('Forbidden. You do not have permission to update messages in this chat.');
+        } else if (response.status === 404) {
+            const errorData = await response.text();
+            console.error('Not Found', errorData);
+            throw new Error('Message not found. Please try again.');
+        } else {
+            const errorData = await response.text();
+            console.error('Server error', errorData);
+            throw new Error('Server error. Please try again later.');
+        }
+    } catch (error) {
+        console.error('Error updating message', error);
+        throw new Error('An error occurred while updating the message. Please try again.');
+    }
+};
