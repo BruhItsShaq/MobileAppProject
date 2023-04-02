@@ -20,6 +20,10 @@ export default class ProfileScreen extends Component {
   }
 
   async componentDidMount() {
+    await this.getUserData();
+  }
+
+  async getUserData() {
     try {
       const u_id = await AsyncStorage.getItem('user_id');
       const userData = await getProfile(u_id);
@@ -48,10 +52,13 @@ export default class ProfileScreen extends Component {
       password: password,
     };
 
+    console.log(profileData);
+
     try {
       const response = await updateProfile(user.user_id, profileData);
       console.log(response);
-      this.setState({ user: response, isEditing: false });
+      this.setState({ isEditing: false });
+      await this.getUserData();
     } catch (error) {
       this.setState({ error: error.message });
     }

@@ -53,7 +53,7 @@ export const updateProfile = async (user_id, profileData) => {
         console.log('after update');
         console.log('Response:', response);
 
-        const data = await response.json();
+        const data = await response.text();
        // console.log('Response data for updating profile:', data);
 
         if (response.status === 200) {
