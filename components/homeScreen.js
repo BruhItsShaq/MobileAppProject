@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Modal, TextInput, Button } from 'react-native';
-import { fetchChats, createChat } from '../services/chatRequests';
+import { fetchChats, createChat, updateChatName } from '../services/chatRequests';
+import { MaterialIcons } from '@expo/vector-icons';
 
 export default class HomeScreen extends Component {
     constructor(props) {
@@ -10,8 +11,12 @@ export default class HomeScreen extends Component {
             chats: [],
             search: '',
             error: '',
-            isModalVisible: false,
+            isCreateModalVisible: false,
+            isUpdateModalVisible: false,
             newChatName: '',
+            chatIdToUpdate: null,
+            updatedChatName: '',
+            updateError: '',
         };
     }
 
@@ -29,12 +34,15 @@ export default class HomeScreen extends Component {
     };
 
     handleChatPress = (chat_id) => {
-        // Add your navigation logic here, e.g., navigate to the chat screen
-        console.log('Chat pressed:', chat_id);
+        this.props.navigation.navigate('Chat', { chatId: chat_id });
     };
 
-    toggleModal = () => {
-        this.setState((prevState) => ({ isModalVisible: !prevState.isModalVisible }));
+    toggleCreateModal = () => {
+        this.setState((prevState) => ({ isCreateModalVisible: !prevState.isCreateModalVisible }));
+    };
+
+    toggleUpdateModal = () => {
+        this.setState((prevState) => ({ isUpdateModalVisible: !prevState.isUpdateModalVisible }));
     };
 
     handleNewChatNameChange = (text) => {
@@ -54,15 +62,44 @@ export default class HomeScreen extends Component {
             this.setState((prevState) => ({
                 chats: [newChat, ...prevState.chats],
                 newChatName: '',
-                isModalVisible: false,
+                isCreateModalVisible: false,
             }));
         } catch (error) {
             this.setState({ error: error.message });
         }
     };
 
+    handleUpdateChatName = async () => {
+        const { chatIdToUpdate, updatedChatName } = this.state;
+
+        if (!chatIdToUpdate) {
+            this.setState({ updateError: 'Please select a chat to update' });
+            return;
+        }
+
+        if (!updatedChatName) {
+            this.setState({ updateError: 'Please enter a new chat name' });
+            return;
+        }
+
+        try {
+            const response = await updateChatName(chatIdToUpdate, updatedChatName);
+            const updatedChats = [...this.state.chats];
+            const index = updatedChats.findIndex((chat) => chat.chat_id === chatIdToUpdate);
+            updatedChats[index].name = updatedChatName;
+            this.setState({
+                chats: updatedChats,
+                isUpdateModalVisible: false,
+                updatedChatName: '',
+                updateError: '',
+            });
+        } catch (error) {
+            this.setState({ updateError: error.message });
+        }
+    };
+
     render() {
-        const { chats, error, isModalVisible, newChatName } = this.state;
+        const { chats, error, isCreateModalVisible, isUpdateModalVisible, newChatName, updatedChatName } = this.state;
 
         return (
             <View style={styles.container}>
@@ -71,7 +108,21 @@ export default class HomeScreen extends Component {
                     renderItem={({ item }) => (
                         <TouchableOpacity onPress={() => this.handleChatPress(item.chat_id)}>
                             <View style={styles.chatItem}>
-                                <Text style={styles.chatTitle}>{item.name}</Text>
+                                <View style={styles.chatTitleContainer}>
+                                    <Text style={styles.chatTitle}>{item.name}</Text>
+                                    <TouchableOpacity
+                                        style={styles.updateIconContainer}
+                                        onPress={() => {
+                                            this.setState({
+                                                isUpdateModalVisible: true,
+                                                chatIdToUpdate: item.chat_id,
+                                                updatedChatName: item.name,
+                                            });
+                                        }}
+                                    >
+                                        <MaterialIcons name="edit" size={20} color="#0bff03" />
+                                    </TouchableOpacity>
+                                </View>
                             </View>
                         </TouchableOpacity>
                     )}
@@ -82,7 +133,6 @@ export default class HomeScreen extends Component {
                         </View>
                     }
                 />
-
                 <>
                     {error && (
                         <View>
@@ -90,17 +140,12 @@ export default class HomeScreen extends Component {
                         </View>
                     )}
                 </>
-
-                <TouchableOpacity style={styles.addButton} onPress={this.toggleModal}>
-                    {/* <Text style={styles.addButtonText}>Create Chat</Text> */}
-                </TouchableOpacity>
-
-                {/* Modal */}
+                {/* Create New Chat Modal */}
                 <Modal
                     animationType="slide"
                     transparent={true}
-                    visible={isModalVisible}
-                    onRequestClose={this.toggleModal}
+                    visible={isCreateModalVisible}
+                    onRequestClose={this.toggleCreateModal}
                 >
                     <View style={styles.centeredView}>
                         <View style={styles.modalView}>
@@ -112,19 +157,47 @@ export default class HomeScreen extends Component {
                                 onChangeText={this.handleNewChatNameChange}
                             />
                             <View style={styles.modalButtonsContainer}>
-                                <Button title="Cancel" onPress={this.toggleModal} />
+                                <Button title="Cancel" onPress={this.toggleCreateModal} />
                                 <Button title="Create" onPress={this.handleCreateChat} />
                             </View>
                         </View>
                     </View>
                 </Modal>
 
+                {/* Update Chat Modal */}
+                <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={isUpdateModalVisible}
+                    onRequestClose={this.toggleUpdateModal}
+                >
+                    <View style={styles.centeredView}>
+                        <View style={styles.modalView}>
+                            <Text style={styles.modalTitle}>Update Chat</Text>
+                            <TextInput
+                                style={styles.modalInput}
+                                placeholder="Enter new chat name"
+                                value={updatedChatName}
+                                onChangeText={(text) => this.setState({ updatedChatName: text })}
+                            />
+                            {this.state.updateError && (
+                                <View style={styles.errorContainer}>
+                                    <Text style={styles.errorText}>{this.state.updateError}</Text>
+                                </View>
+                            )}
+                            <View style={styles.modalButtonsContainer}>
+                                <Button title="Cancel" onPress={this.toggleUpdateModal} />
+                                <Button title="Update" onPress={this.handleUpdateChatName} />
+                            </View>
+                        </View>
+                    </View>
+                </Modal>
 
                 {/* Floating Button */}
                 <TouchableOpacity
                     activeOpacity={0.7}
                     style={styles.floatingButton}
-                    onPress={this.toggleModal}
+                    onPress={this.toggleCreateModal}
                 >
                     <Text style={styles.floatingButtonText}>+</Text>
                 </TouchableOpacity>
@@ -145,6 +218,9 @@ const styles = StyleSheet.create({
         padding: 20,
         borderBottomWidth: 1,
         borderBottomColor: '#E0E0E0',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
     chatTitle: {
         fontSize: 18,
@@ -217,5 +293,49 @@ const styles = StyleSheet.create({
     floatingButtonText: {
         fontSize: 30,
         color: '#FFF'
+    },
+    updateButton: {
+        backgroundColor: '#0084ff',
+        paddingVertical: 5,
+        paddingHorizontal: 10,
+        borderRadius: 5,
+        flexDirection: 'row',
+        alignItems: 'center'
+    },
+    buttonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
+    addButton: {
+        backgroundColor: '#0084ff',
+        paddingVertical: 5,
+        paddingHorizontal: 10,
+        borderRadius: 5,
+        marginBottom: 10,
+        alignSelf: 'flex-end'
+    },
+    addButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
+    emptyText: {
+        fontSize: 18,
+        textAlign: 'center',
+        marginTop: 20,
+        color: '#444',
+    },
+    errorText: {
+        color: 'red',
+        fontSize: 16,
+        textAlign: 'center',
+        marginTop: 20,
+    },
+    errorContainer: {
+        backgroundColor: '#F8D7DA',
+        padding: 10,
+        marginTop: 10,
+        borderRadius: 5,
     }
 });
