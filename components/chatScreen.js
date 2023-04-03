@@ -15,18 +15,18 @@ export default class ChatScreen extends Component {
             newMessage: '',
             isLoading: true,
             userId: null,
+            isButtonVisible: null,
             lastClickedMessageId: null,
             lastClickedMessageTimestamp: null,
             isEditing: false, // added state for tracking whether user is currently editing a message
-            editedMessageId: null, // added state for tracking which message the user is editing
-            editedMessageText: '', // added state for tracking the edited message text
-            isButtonVisible: false,
+            editingMessageId: null,
+            editingMessage: '', // added state for tracking the edited message text
         };
 
         this.sendMessage = this.sendMessage.bind(this);
         this.deleteMessage = this.deleteMessage.bind(this);
-        this.updateMessage = this.updateMessage.bind(this);
-        this.handleEditSubmit = this.handleEditSubmit.bind(this);
+        this.handleSaveButtonClick = this.handleSaveButtonClick.bind(this);
+        this.handleMessageClick = this.handleMessageClick.bind(this);
     }
 
     async componentDidMount() {
@@ -89,105 +89,109 @@ export default class ChatScreen extends Component {
         }
     };
 
-    updateMessage = async (messageId, message) => {
-        // Set the state to indicate that the user is editing a message
-        this.setState({ isEditing: true, editedMessageId: messageId, editedMessageText: message });
-    };
-
-    handleEditSubmit = async () => {
-        const { chatId, editedMessageId, editedMessageText } = this.state;
-        try {
-            // Call the updateMessage API to update the message in the database
-            await updateMessage(chatId, editedMessageId, editedMessageText);
-
-            // Update the message in the messages array
-            const updatedMessages = this.state.messages.map((msg) =>
-                msg.message_id === editedMessageId ? { ...msg, message: editedMessageText } : msg
-            );
-
-            // Update the state to indicate that the user is no longer editing a message
-            this.setState({
-                messages: updatedMessages,
-                isEditing: false,
-                editedMessageId: null,
-                editedMessageText: "",
-            });
-        } catch (err) {
-            console.error("Error updating message:", err);
-        }
-    };
+    // updateMessage = async (messageId, message) => {
+    //     // Set the state to indicate that the user is editing a message
+    //     this.setState({ isEditing: true, editedMessageId: messageId, editedMessageText: message });
+    // };
 
     handleMessageClick = (messageId) => {
         const { lastClickedMessageId, lastClickedMessageTimestamp } = this.state;
         const currentTimestamp = Date.now();
-        if (messageId === lastClickedMessageId && (currentTimestamp - lastClickedMessageTimestamp) < 500) {
-            // double-click detected
+
+        if (messageId !== lastClickedMessageId) {
+            // Single click detected
             this.setState({
                 lastClickedMessageId: messageId,
                 lastClickedMessageTimestamp: currentTimestamp,
-                isButtonVisible: true,
+                isButtonVisible: false
+            });
+        } else if ((currentTimestamp - lastClickedMessageTimestamp) < 1000) {
+            // Double click detected
+            this.setState({
+                lastClickedMessageId: messageId,
+                lastClickedMessageTimestamp: currentTimestamp,
+                isButtonVisible: true
             });
         } else {
-            // single-click detected
+            // Single click detected after previous single click
             this.setState({
                 lastClickedMessageId: messageId,
                 lastClickedMessageTimestamp: currentTimestamp,
-                isButtonVisible: false,
+                isButtonVisible: false
             });
         }
     };
 
-
+    handleSaveButtonClick = async () => {
+        const chat_id = this.state.chatId;
+        const { editingMessageId, editingMessage } = this.state;
+        try {
+            await updateMessage(chat_id, editingMessageId, editingMessage);
+            // Update the UI to reflect the updated message
+            await this.loadMessages();
+            this.setState({ isEditing: false, editingMessageId: null, editingMessage: '' });
+        } catch (error) {
+            console.error('Error updating message', error);
+            // Display an error message to the user
+            // e.g. using a Toast component or by updating the state to display an error message
+            this.setState({ errorMessage: error.message });
+        }
+    };
 
     renderMessage = ({ item }) => {
-        const { userId, lastClickedMessageId, lastClickedMessageTimestamp, isEditing, editedMessageId, editedMessageText } = this.state;
-        const authorId = item.author.user_id;
+        const { userId, lastClickedMessageId, lastClickedMessageTimestamp, editingMessageId, editingMessage } = this.state;
+        var authorId = item.author.user_id;
         const isMyMessage = parseInt(authorId) === parseInt(userId);
         const messageStyle = isMyMessage ? styles.myMessage : styles.otherMessage;
         const textStyle = isMyMessage ? styles.myMessageText : styles.otherMessageText;
         const authorName = isMyMessage ? 'Me' : `${item.author.first_name} ${item.author.last_name}`;
         const messageTime = moment(item.timestamp).format('h:mm A');
-        const isButtonVisible = item.message_id === lastClickedMessageId && (Date.now() - lastClickedMessageTimestamp) < 1000;
-        const showEditDeleteButtons = item.message_id === lastClickedMessageId;
+        const isButtonVisible = this.state.isButtonVisible; 
 
         return (
-            <View style={[styles.messageContainer, messageStyle]}>
-                <Text style={styles.author}>{authorName}</Text>
-                {!isEditing && (
-                    <TouchableOpacity style={styles.message} onDoubleTap={() => this.handleMessageClick(item.message_id)}>
-                        <Text style={textStyle}>{item.message}</Text>
-                    </TouchableOpacity>
-                )}
-                {isEditing && item.message_id === editedMessageId && (
-                    <View style={styles.editContainer}>
-                        <TextInput
-                            style={styles.editInput}
-                            onChangeText={(text) => this.setState({ editedMessageText: text })}
-                            value={editedMessageText}
-                        />
-                        <TouchableOpacity style={styles.editButton} onPress={this.handleEditSubmit}>
-                            <Text style={styles.editButtonText}>Save</Text>
-                        </TouchableOpacity>
+            <View key={item.message_id} style={messageStyle}>
+                {!isMyMessage && <Text style={styles.authorName}>{authorName}</Text>}
+                <TouchableOpacity onPress={() => this.handleMessageClick(item.message_id)}>
+                    <Text style={[styles.messageText, textStyle]}>{item.message}</Text>
+                </TouchableOpacity>
+                <Text style={styles.messageTime}>{messageTime}</Text>
+                {isMyMessage && isButtonVisible && (
+                    <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 5 }}>
+                        {editingMessageId === item.message_id ? (
+                            // If the message is being edited, show a text input and save button
+                            <>
+                                <TextInput
+                                    style={{ flex: 1, padding: 5, borderWidth: 1 }}
+                                    value={editingMessage}
+                                    onChangeText={(text) => this.setState({ editingMessage: text })}
+                                />
+                                <TouchableOpacity
+                                    style={{ paddingHorizontal: 5 }}
+                                    onPress={() => {
+                                        this.handleSaveButtonClick(item.message_id, this.state.editingMessage);
+                                    }}>
+                                    <Text style={{ color: 'green' }}>Save</Text>
+                                </TouchableOpacity>
+                            </>
+                        ) : (
+                            // If the message is not being edited, show the edit and delete buttons
+                            <>
+                                <TouchableOpacity
+                                    style={{ paddingHorizontal: 5 }}
+                                    onPress={() => {
+                                        this.setState({ editingMessageId: item.message_id, editingMessage: item.message });
+                                    }}>
+                                    <Text style={{ color: 'blue' }}>Edit</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={{ paddingHorizontal: 5 }}
+                                    onPress={() => this.deleteMessage(item.message_id)}>
+                                    <Text style={{ color: 'red' }}>Delete</Text>
+                                </TouchableOpacity>
+                            </>
+                        )}
                     </View>
                 )}
-                {isMyMessage && !isEditing && isButtonVisible && (
-                    <View style={styles.buttonContainer}>
-                        <TouchableOpacity style={styles.editButton} onPress={() => this.updateMessage(item.message_id, item.message)}>
-                            <Text style={styles.editButtonText}>Edit</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.deleteButton} onPress={() => this.deleteMessage(item.message_id)}>
-                            <Text style={styles.deleteButtonText}>Delete</Text>
-                        </TouchableOpacity>
-                    </View>
-                )}
-                {!isMyMessage && !isEditing && showEditDeleteButtons && (
-                    <View style={styles.buttonContainer}>
-                        <TouchableOpacity style={styles.reportButton} onPress={() => this.reportMessage(item.message_id)}>
-                            <Text style={styles.reportButtonText}>Report</Text>
-                        </TouchableOpacity>
-                    </View>
-                )}
-                <Text style={styles.time}>{messageTime}</Text>
             </View>
         );
     };
@@ -268,6 +272,7 @@ const styles = StyleSheet.create({
     authorName: {
         fontWeight: 'bold',
         marginBottom: 5,
+        color: 'black',
     },
     inputContainer: {
         flexDirection: 'row',
