@@ -33,8 +33,8 @@ export default class HomeScreen extends Component {
         }
     };
 
-    handleChatPress = (chat_id) => {
-        this.props.navigation.navigate('Chat', { chatId: chat_id });
+    handleChatPress = (chat_id, chat_name) => {
+        this.props.navigation.navigate('Chat', { chatId: chat_id, chatName: chat_name });
     };
 
     toggleCreateModal = () => {
@@ -100,13 +100,13 @@ export default class HomeScreen extends Component {
 
     render() {
         const { chats, error, isCreateModalVisible, isUpdateModalVisible, newChatName, updatedChatName } = this.state;
-
+        console.log(chats);
         return (
             <View style={styles.container}>
                 <FlatList
                     data={chats}
                     renderItem={({ item }) => (
-                        <TouchableOpacity onPress={() => this.handleChatPress(item.chat_id)}>
+                        <TouchableOpacity onPress={() => this.handleChatPress(item.chat_id, item.name)}>
                             <View style={styles.chatItem}>
                                 <View style={styles.chatTitleContainer}>
                                     <Text style={styles.chatTitle}>{item.name}</Text>
