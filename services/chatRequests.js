@@ -265,3 +265,82 @@ export const updateMessage = async (chat_id, message_id, message) => {
         throw new Error('An error occurred while updating the message. Please try again.');
     }
 };
+
+export const addUserToChat = async (chat_id, user_id) => {
+    const session_token = await AsyncStorage.getItem('session_token');
+
+    try {
+        const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}/user/${user_id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Authorization': session_token,
+            },
+        });
+
+        if (response.status === 200) {
+            const data = await response.text();
+            await getChatDetails(chat_id);
+            return data;
+        } else if (response.status === 400) {
+            const errorData = await response.text();
+            console.error('Bad request', errorData);
+            throw new Error('Bad request. Please try again.');
+        } else if (response.status === 401) {
+            const errorData = await response.text();
+            console.error('Unauthorised', errorData);
+            throw new Error('Unauthorised. Please log in and try again.');
+        } else if (response.status === 404) {
+            const errorData = await response.text();
+            console.error('Not found', errorData);
+            throw new Error('Not found. Please try again with valid chat and user IDs.');
+        } else {
+            const errorData = await response.text();
+            console.error('Server error', errorData);
+            throw new Error('Server error. Please try again later.');
+        }
+    } catch (error) {
+        console.error('Error adding user to chat', error);
+        throw new Error('An error occurred while adding the user to the chat. Please try again.');
+    }
+};
+
+export const removeUserFromChat = async (chat_id, user_id) => {
+    const session_token = await AsyncStorage.getItem('session_token');
+
+    try {
+        const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}/user/${user_id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Authorization': session_token,
+            },
+        });
+
+        if (response.status === 200) {
+            const data = await response.text();
+            await getChatDetails(chat_id);
+            return data;
+        } else if (response.status === 400) {
+            const errorData = await response.text();
+            console.error('Bad request', errorData);
+            throw new Error('Bad request. Please try again.');
+        } else if (response.status === 401) {
+            const errorData = await response.text();
+            console.error('Unauthorised', errorData);
+            throw new Error('Unauthorised. Please log in and try again.');
+        } else if (response.status === 404) {
+            const errorData = await response.text();
+            console.error('Not found', errorData);
+            throw new Error('Not found. Please try again with valid chat and user IDs.');
+        } else {
+            const errorData = await response.text();
+            console.error('Server error', errorData);
+            throw new Error('Server error. Please try again later.');
+        }
+    } catch (error) {
+        console.error('Error removing user from chat', error);
+        throw new Error('An error occurred while removing the user from the chat. Please try again.');
+    }
+};
+
