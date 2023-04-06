@@ -9,7 +9,7 @@ import {
   Alert,
   FlatList,
 } from 'react-native';
-import { getContacts, addContact, blockContact } from '../services/contactRequests';
+import { getContacts, addContact, blockContact, deleteContact } from '../services/contactRequests';
 import { MaterialIcons, AntDesign } from '@expo/vector-icons';
 
 
@@ -52,7 +52,16 @@ export default class ContactsScreen extends Component {
       Alert.alert('Success', 'Contact added successfully.');
       this.setState({ modalVisible: false, newContactId: '' }, this.loadContacts);
     } catch (error) {
-      Alert.alert('Error', error.message);
+      this.setState({ error: error.message });
+    }
+  };
+
+  handleDeleteContact = async (user_id) => {
+    try{
+        await deleteContact(user_id);
+        this.loadContacts();
+    } catch (error) {
+      this.setState({ error: error.message});
     }
   };
 
@@ -62,7 +71,7 @@ export default class ContactsScreen extends Component {
       Alert.alert('Success', 'Contact blocked successfully.');
       this.loadContacts();
     } catch (error) {
-      Alert.alert('Error', error.message);
+      this.setState({ error: error.message });
     }
   };
 
@@ -74,9 +83,9 @@ export default class ContactsScreen extends Component {
         </Text>
         <View style={styles.contactButtons}>
           <TouchableOpacity onPress={() => this.handleBlockContact(item.user_id)}>
-            <AntDesign name="stop" size={24} color="red" />
+          <MaterialIcons name="block" size={24} color="red" />
           </TouchableOpacity>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => this.handleDeleteContact(item.user_id)}>
             <MaterialIcons name="delete" size={24} color="black" />
           </TouchableOpacity>
         </View>
