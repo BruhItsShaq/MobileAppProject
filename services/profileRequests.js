@@ -17,15 +17,15 @@ export const getProfile = async (user_id) => {
             const data = await response.json();
             return data;
         } else if (response.status === 401) {
-            const errorData = await response.json();
+            const errorData = await response.text();
             console.error('Unauthorised', errorData);
             throw new Error('Unauthorised. Please log in and try again.');
         } else if (response.status === 404) {
-            const errorData = await response.json();
+            const errorData = await response.text();
             console.error('User not found', errorData);
             throw new Error('User not found. Please try again with a valid user ID.');
         } else {
-            const errorData = await response.json();
+            const errorData = await response.text();
             console.error('Server error', errorData);
             throw new Error('Server error. Please try again later.');
         }
@@ -35,6 +35,70 @@ export const getProfile = async (user_id) => {
     }
 };
 
+export const getProfilePicture = async () => {
+    const session_token = await AsyncStorage.getItem('session_token');
+    const u_id = await AsyncStorage.getItem('user_id');
+
+    try {
+        const response = await fetch(`http://localhost:3333/api/1.0.0/user/${u_id}/photo`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'image/png',
+                'X-Authorization': session_token,
+            },
+        });
+
+        if (response.status === 200) {
+            const data = await response.blob();
+            return data;
+        } else if (response.status === 401) {
+            const errorData = await response.text();
+            console.error('Unauthorised', errorData);
+            throw new Error('Unauthorised. Please log in and try again.');
+        } else if (response.status === 404) {
+            const errorData = await response.text();
+            console.error('User not found', errorData);
+            throw new Error('User not found. Please try again with a valid user ID.');
+        } else {
+            const errorData = await response.text();
+            console.error('Server error', errorData);
+            throw new Error('Server error. Please try again later.');
+        }
+    } catch (error) {
+        console.error('Error getting profile photo', error);
+        throw new Error('An error occurred while getting the profile photo. Please try again.');
+    }
+
+}
+
+export const Logout = async () => {
+    const session_token = await AsyncStorage.getItem('session_token');
+
+    try {
+        const response = await fetch('http://localhost:3333/api/1.0.0/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Authorization': session_token,
+            },
+        });
+
+        if (response.status === 200) {
+            return true;
+        } else if (response.status === 401) {
+            const errorData = await response.text();
+            console.error('Unauthorised', errorData);
+            throw new Error('Unauthorised. Please log in and try again.');
+        } else {
+            const errorData = await response.text();
+            console.error('Server error', errorData);
+            throw new Error('Server error. Please try again later.');
+        }
+    } catch (error) {
+        console.error('Error logging out', error);
+        throw new Error('An error occurred while logging out. Please try again.');
+    }
+};
 
 export const updateProfile = async (user_id, profileData) => {
     console.log('before update');
@@ -54,7 +118,7 @@ export const updateProfile = async (user_id, profileData) => {
         console.log('Response:', response);
 
         const data = await response.text();
-       // console.log('Response data for updating profile:', data);
+        // console.log('Response data for updating profile:', data);
 
         if (response.status === 200) {
             return response;
@@ -63,19 +127,19 @@ export const updateProfile = async (user_id, profileData) => {
             console.error('Bad request', errorData);
             throw new Error('Bad request. Please try again with valid profile data.');
         } else if (response.status === 401) {
-            const errorData = await response.json();
+            const errorData = await response.text();
             console.error('Unauthorised', errorData);
             throw new Error('Unauthorised. Please log in and try again.');
         } else if (response.status === 403) {
-            const errorData = await response.json();
+            const errorData = await response.text();
             console.error('Forbidden', errorData);
             throw new Error('Forbidden. You do not have permission to update this user.');
         } else if (response.status === 404) {
-            const errorData = await response.json();
+            const errorData = await response.text();
             console.error('User not found', errorData);
             throw new Error('User not found. Please try again with a valid user ID.');
         } else {
-            const errorData = await response.json();
+            const errorData = await response.text();
             console.error('Server error', errorData);
             throw new Error('Server error. Please try again later.');
         }
