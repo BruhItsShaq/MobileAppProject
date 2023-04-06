@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TextInput, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getProfile, updateProfile } from '../services/profileRequests';
+import { getProfile, updateProfile, Logout, getProfilePicture } from '../services/profileRequests';
 
 export default class ProfileScreen extends Component {
   constructor(props) {
@@ -16,11 +16,15 @@ export default class ProfileScreen extends Component {
       last_name: '',
       email: '',
       password: '',
+      profilePicture: null,
     };
+
+    this.handleDelete = this.handleDelete.bind(this);
   }
 
   async componentDidMount() {
     await this.getUserData();
+    await this.getUserProfilePhoto();
   }
 
   async getUserData() {
@@ -36,6 +40,26 @@ export default class ProfileScreen extends Component {
       });
     } catch (error) {
       this.setState({ error: error.message, isLoading: false });
+    }
+  }
+
+  gotoCamera() {
+    this.props.navigation.navigate('Camera');
+  }
+
+  backToLogin() {
+    this.props.navigation.navigate('Login');
+  };
+
+  async getUserProfilePhoto() {
+    try {
+      const photoData = await getProfilePicture();
+      this.setState({
+        profilePhoto: photoData,
+      });
+    } catch (error) {
+      console.error('Error getting profile photo', error);
+      throw new Error('An error occurred while getting the profile photo. Please try again.');
     }
   }
 
@@ -64,6 +88,20 @@ export default class ProfileScreen extends Component {
     }
   };
 
+  handleDelete = async () => {
+    try {
+      const response = await Logout();
+      if (response === 200) {
+        // Remove token from async storage
+        await AsyncStorage.removeItem('session_token');
+        // Navigate to SignUp page
+        this.backToLogin();
+      }
+    } catch (error) {
+      this.setState({ error: error.message });
+    }
+  }
+
   handleCancel = () => {
     const { user } = this.state;
     this.setState({
@@ -87,10 +125,19 @@ export default class ProfileScreen extends Component {
           <>
             {!isEditing ? (
               <>
+                {user.photo && (
+                  <Image source={{ uri: this.getUserProfilePhoto(), headers: {"X-Authorization": token} }} style={styles.profilePhoto} />
+                )}
+                <TouchableOpacity style={styles.text} onPress={() => { this.props.navigation.navigate('Camera') }}>
+                  <Text style={styles.text}>Upload picture</Text>
+                </TouchableOpacity>
                 <Text style={styles.text}>Name: {user.first_name} {user.last_name}</Text>
                 <Text style={styles.text}>Email: {user.email}</Text>
                 <TouchableOpacity style={styles.button} onPress={this.handleEdit}>
                   <Text style={styles.buttonText}>Edit Profile</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.logOutButton} onPress={this.handleDelete}>
+                  <Text style={styles.buttonText}>Logout</Text>
                 </TouchableOpacity>
               </>
             ) : (
@@ -134,43 +181,51 @@ export default class ProfileScreen extends Component {
       </View>
     );
   }
-} 
+}
 
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: '#F5FCFF',
-    },
-    title: {
-      fontSize: 20,
-      textAlign: 'center',
-      margin: 10,
-    },
-    text: {
-      textAlign: 'center',
-      color: '#333333',
-      marginBottom: 5,
-    },
-    input: {
-      borderWidth: 1,
-      borderColor: 'black',
-      width: 200,
-      marginBottom: 10,
-      padding: 10,
-    },
-    button: {
-      backgroundColor: 'blue',
-      padding: 10,
-      borderRadius: 5,
-      margin: 5,
-    },
-    buttonText: {
-      color: 'white',
-      textAlign: 'center',
-    },
-    errorText: {
-      color: 'red',
-    },
-  });
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5FCFF',
+  },
+  title: {
+    fontSize: 20,
+    textAlign: 'center',
+    margin: 10,
+  },
+  text: {
+    textAlign: 'center',
+    color: '#333333',
+    marginBottom: 5,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: 'black',
+    width: 200,
+    marginBottom: 10,
+    padding: 10,
+  },
+  button: {
+    backgroundColor: 'blue',
+    padding: 10,
+    borderRadius: 5,
+    margin: 5,
+  },
+  buttonText: {
+    color: 'white',
+    textAlign: 'center',
+  },
+  errorText: {
+    color: 'red',
+  },
+  logOutButton: {
+    backgroundColor: 'red',
+    padding: 10,
+    borderRadius: 5,
+    margin: 5,
+    position: 'absolute',
+    bottom: 10
+  }
+});
