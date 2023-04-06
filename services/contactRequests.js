@@ -19,11 +19,11 @@ export const getContacts = async () => {
         if (response.status === 200) {
             return data;
         } else if (response.status === 401) {
-            const errorData = await response.json();
+            const errorData = await response.text();
             console.error('Unauthorised', errorData);
             throw new Error('Unauthorised. Please log in and try again.');
         } else {
-            const errorData = await response.json();
+            const errorData = await response.text();
             console.error('Server error', errorData);
             throw new Error('Server error. Please try again later.');
         }
@@ -59,6 +59,42 @@ export const addContact = async (user_id) => {
     }
 };
 
+export const deleteContact = async (user_id) => {
+    const session_token = await AsyncStorage.getItem('session_token');
+
+    try {
+        const response = await fetch(`http://localhost:3333/api/1.0.0/user/${user_id}/contact`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Authorization': session_token,
+            },
+        });
+
+        if (response.status === 200) {
+            return true;
+        } else if (response.status === 400) {
+            const errorData = await response.text();
+            console.error('Bad request', errorData);
+            throw new Error('Bad request. You cannot remove yourself as a contact.');
+        } else if (response.status === 401) {
+            const errorData = await response.text();
+            console.error('Unauthorised', errorData);
+            throw new Error('Unauthorised. Please log in and try again.');
+        } else if (response.status === 404) {
+            const errorData = await response.text();
+            console.error('User not found', errorData);
+            throw new Error('User not found. Please try again with a valid user ID.');
+        } else {
+            const errorData = await response.text();
+            console.error('Server error', errorData);
+            throw new Error('Server error. Please try again later.');
+        }
+    } catch (error) {
+        console.error('Error removing contact', error);
+        throw new Error('An error occurred while removing the contact. Please try again.');
+    }
+};
 export const blockContact = async (user_id) => {
     const session_token = await AsyncStorage.getItem('session_token');
 
@@ -75,7 +111,7 @@ export const blockContact = async (user_id) => {
         if (response.status === 200) {
             return true;
         } else {
-            const errorData = await response.json();
+            const errorData = await response.text();
             console.error(`Error (${response.status}):`, errorData.message);
             throw new Error(errorData.message);
         }
@@ -102,11 +138,11 @@ export const getBlockedContacts = async () => {
         if (response.status === 200) {
             return data;
         } else if (response.status === 401) {
-            const errorData = await response.json();
+            const errorData = await response.text();
             console.error('Unauthorised', errorData);
             throw new Error('Unauthorised. Please log in and try again.');
         } else {
-            const errorData = await response.json();
+            const errorData = await response.text();
             console.error('Server error', errorData);
             throw new Error('Server error. Please try again later.');
         }
@@ -131,19 +167,19 @@ export const unblockContact = async (user_id) => {
         if (response.status === 200) {
             return true;
         } else if (response.status === 400) {
-            const errorData = await response.json();
+            const errorData = await response.text();
             console.error('Bad request', errorData);
             throw new Error('Bad request. You cannot unblock yourself.');
         } else if (response.status === 401) {
-            const errorData = await response.json();
+            const errorData = await response.text();
             console.error('Unauthorised', errorData);
             throw new Error('Unauthorised. Please log in and try again.');
         } else if (response.status === 404) {
-            const errorData = await response.json();
+            const errorData = await response.text();
             console.error('User not found', errorData);
             throw new Error('User not found. Please try again with a valid user ID.');
         } else {
-            const errorData = await response.json();
+            const errorData = await response.text();
             console.error('Server error', errorData);
             throw new Error('Server error. Please try again later.');
         }
