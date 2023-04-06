@@ -10,9 +10,20 @@ import ContactsScreen from './components/contactsScreen';
 import BlockedScreen from './components/blockedScreen';
 import LoginScreen from './components/login';
 import SignUp from './components/signUp';
+import Camera from './components/cameraSendToServer';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+
+function ProfileStack() {
+  return(
+    <Stack.Navigator initialRouteName="Profile">
+      <Stack.Screen name="Profile" component={ProfileScreen} option={{ headerShown: false }} />
+      <Stack.Screen name="Camera" component={Camera} option={{headerShown: false}} />
+    </Stack.Navigator>
+      
+  )
+}
 
 function HomeStack() {
   return (
@@ -36,7 +47,7 @@ function MainTabs() {
   return (
     <Tab.Navigator>
       <Tab.Screen name="Home" component={HomeStack} options={{ headerShown: false }} />
-      <Tab.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }} />
+      <Tab.Screen name="Profile" component={ProfileStack} options={{ headerShown: false }} />
       <Tab.Screen name="Contacts" component={ContactsStack} options={{ headerShown: false }} />
     </Tab.Navigator>
   );
