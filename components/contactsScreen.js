@@ -9,7 +9,7 @@ import {
   Alert,
   FlatList,
 } from 'react-native';
-import { getContacts, addContact, blockContact, deleteContact } from '../services/contactRequests';
+import { getContacts, addContact, blockContact, deleteContact, searchUsers } from '../services/contactRequests';
 import { MaterialIcons, AntDesign } from '@expo/vector-icons';
 
 
@@ -22,6 +22,8 @@ export default class ContactsScreen extends Component {
       error: '',
       modalVisible: false,
       newContactId: '',
+      searchResults: [],
+      searchTerm: ''
     };
   }
 
@@ -57,11 +59,11 @@ export default class ContactsScreen extends Component {
   };
 
   handleDeleteContact = async (user_id) => {
-    try{
-        await deleteContact(user_id);
-        this.loadContacts();
+    try {
+      await deleteContact(user_id);
+      this.loadContacts();
     } catch (error) {
-      this.setState({ error: error.message});
+      this.setState({ error: error.message });
     }
   };
 
@@ -75,6 +77,25 @@ export default class ContactsScreen extends Component {
     }
   };
 
+  handleSearch = async () => {
+    try {
+      const results = await searchUsers(this.state.searchTerm);
+      this.setState({ searchResults: results });
+    } catch (error) {
+      this.setState({ error: error.message });
+    }
+  };
+
+  renderSearchItem = ({ item }) => {
+    return (
+      <View style={styles.contactItem}>
+        <Text>
+          {item.given_name} {item.family_name}
+        </Text>
+      </View>
+    );
+  }
+
   renderItem = ({ item }) => {
     return (
       <View style={styles.contactItem}>
@@ -83,7 +104,7 @@ export default class ContactsScreen extends Component {
         </Text>
         <View style={styles.contactButtons}>
           <TouchableOpacity onPress={() => this.handleBlockContact(item.user_id)}>
-          <MaterialIcons name="block" size={24} color="red" />
+            <MaterialIcons name="block" size={24} color="red" />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => this.handleDeleteContact(item.user_id)}>
             <MaterialIcons name="delete" size={24} color="black" />
@@ -94,17 +115,38 @@ export default class ContactsScreen extends Component {
   };
 
   render() {
-    const { contacts, error, modalVisible, newContactId } = this.state;
+    const { contacts, error, modalVisible, newContactId, searchResults, searchTerm } = this.state;
 
+    console.log('Search results:', searchResults);
     return (
       <View style={styles.container}>
         <Text style={styles.title}>Contacts</Text>
-        <FlatList
-          data={contacts}
-          renderItem={this.renderItem}
-          keyExtractor={(item) => item.user_id.toString()}
-          ListEmptyComponent={<Text style={styles.text}>No contacts found</Text>}
-        />
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search contacts"
+            value={searchTerm}
+            onChangeText={(text) => this.setState({ searchTerm: text })}
+          />
+          <TouchableOpacity style={styles.searchButton} onPress={() => this.handleSearch(searchTerm)}>
+            <MaterialIcons name="search" size={24} color="black" />
+          </TouchableOpacity>
+        </View>
+        {searchTerm && searchResults.length > 0 ? (
+          <FlatList
+            data={searchResults}
+            renderItem={this.renderSearchItem}
+            keyExtractor={(item, index) => (item.user_id || index).toString()}
+            ListEmptyComponent={<Text style={styles.text}>No contacts found</Text>}
+          />
+        ) : (
+          <FlatList
+            data={contacts}
+            renderItem={this.renderItem}
+            keyExtractor={(item) => item.user_id.toString()}
+            ListEmptyComponent={<Text style={styles.text}>No contacts found</Text>}
+          />
+        )}
         <>
           {error && (
             <View>
@@ -228,5 +270,26 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 40,
     right: 20,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: '#f2f2f2',
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    padding: 5,
+    marginLeft: 5,
+  },
+  searchButton: {
+    padding: 5,
+    borderRadius: 5,
+    backgroundColor: 'white',
+    marginLeft: 5,
   },
 });

@@ -188,3 +188,29 @@ export const unblockContact = async (user_id) => {
         throw new Error('An error occurred while unblocking the contact. Please try again.');
     }
 };
+
+export const searchUsers = async (query, searchIn, limit = 20, offset = 0) => {
+    const sessionToken = await AsyncStorage.getItem('session_token');
+
+
+    const response = await fetch(`http://localhost:3333/api/1.0.0/search?q=${query}&search_in=all&limit=${limit}&offset=${offset}`
+        , {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Authorization': sessionToken,
+            },
+        });
+
+    const responseBody = await response.json();
+
+    if (response.status === 200) {
+        return responseBody;
+    } else if (response.status === 400) {
+        throw new Error('Bad Request');
+    } else if (response.status === 401) {
+        throw new Error('Unauthorized');
+    } else {
+        throw new Error('Server Error');
+    }
+}
