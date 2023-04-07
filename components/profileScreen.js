@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TextInput, TouchableOpacity, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getProfile, updateProfile, Logout, getProfilePicture } from '../services/profileRequests';
 
@@ -17,14 +17,16 @@ export default class ProfileScreen extends Component {
       email: '',
       password: '',
       profilePicture: null,
+      photo: null,
     };
 
     this.handleDelete = this.handleDelete.bind(this);
   }
 
   async componentDidMount() {
+    // await this.getUserProfilePhoto();
     await this.getUserData();
-    await this.getUserProfilePhoto();
+    this.get_profile_image()
   }
 
   async getUserData() {
@@ -51,17 +53,43 @@ export default class ProfileScreen extends Component {
     this.props.navigation.navigate('Login');
   };
 
-  async getUserProfilePhoto() {
-    try {
-      const photoData = await getProfilePicture();
-      this.setState({
-        profilePhoto: photoData,
-      });
-    } catch (error) {
-      console.error('Error getting profile photo', error);
-      throw new Error('An error occurred while getting the profile photo. Please try again.');
-    }
+  async get_profile_image() {
+    const u_id = await AsyncStorage.getItem('user_id');
+    const session_token = await AsyncStorage.getItem('session_token');
+
+    fetch(`http://localhost:3333/api/1.0.0/user/${u_id}/photo`, {
+        method: "GET",
+        headers: {
+            "X-Authorization": session_token
+        }
+    })
+    .then((res) => {
+        return res.blob()
+    })
+    .then((resBlob) => {
+        let data = URL.createObjectURL(resBlob);
+
+        this.setState({
+            photo: data,
+            isLoading: false
+        })
+    })
+    .catch((err) => {
+        console.log(err)
+    })
   }
+  // getUserProfilePhoto = async () => {
+  //   try {
+  //     const photoData = await getProfilePicture();
+  //     console.log('This is photodata:', photoData);
+  //     this.setState({
+  //       profilePicture: photoData,
+  //     });
+  //   } catch (error) {
+  //     console.error('Error getting profile photo', error);
+  //     throw new Error('An error occurred while getting the profile photo. Please try again.');
+  //   }
+  // }
 
   handleEdit = () => {
     this.setState({ isEditing: true });
@@ -114,8 +142,9 @@ export default class ProfileScreen extends Component {
   };
 
   render() {
-    const { user, error, isLoading, isEditing, first_name, last_name, email, password } = this.state;
+    const { user, error, isLoading, isEditing, first_name, last_name, email, password, photo } = this.state;
 
+    console.log("profile picture:", photo);
     return (
       <View style={styles.container}>
         <Text style={styles.title}>Profile</Text>
@@ -125,9 +154,7 @@ export default class ProfileScreen extends Component {
           <>
             {!isEditing ? (
               <>
-                {user.photo && (
-                  <Image source={{ uri: this.getUserProfilePhoto(), headers: {"X-Authorization": token} }} style={styles.profilePhoto} />
-                )}
+                <Image source={{ uri:photo}} />
                 <TouchableOpacity style={styles.text} onPress={() => { this.props.navigation.navigate('Camera') }}>
                   <Text style={styles.text}>Upload picture</Text>
                 </TouchableOpacity>

@@ -16,12 +16,13 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function ProfileStack() {
-  return(
+  return (
     <Stack.Navigator initialRouteName="Profile">
       <Stack.Screen name="Profile" component={ProfileScreen} option={{ headerShown: false }} />
-      <Stack.Screen name="Camera" component={Camera} option={{headerShown: false}} />
+      <Stack.Screen name="Camera" component={Camera} option={{ headerShown: false }} />
+      <Stack.Screen name="Login" component={LoginScreen} option={{ headerShown: false, headerLeft: null }}/>
     </Stack.Navigator>
-      
+
   )
 }
 
@@ -58,9 +59,9 @@ export default class App extends Component {
     return (
       <NavigationContainer>
         <Stack.Navigator initialRouteName='Login'>
-          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Login" component={LoginScreen}/>
           <Stack.Screen name="SignUp" component={SignUp} />
-          <Stack.Screen name="Home" component={MainTabs} />
+          <Stack.Screen name="Home" component={MainTabs} options={{ headerLeft: null }} />
         </Stack.Navigator>
       </NavigationContainer>
     )
