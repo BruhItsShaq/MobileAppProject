@@ -50,7 +50,8 @@ export const getProfilePicture = async () => {
 
         if (response.status === 200) {
             const data = await response.blob();
-            return data;
+            let dataToString = URL.createObjectURL(data);
+            return dataToString;
         } else if (response.status === 401) {
             const errorData = await response.text();
             console.error('Unauthorised', errorData);
