@@ -81,7 +81,7 @@ export default class ChatScreen extends Component {
                 const updatedMessages = [...this.state.messages, response.data];
 
                 // Update the state
-                this.setState({ messages: updatedMessages, newMessage: '' }, this.loadMessages);
+                this.setState({ messages: updatedMessages, newMessage: '' }, () => this.loadMessages);
             }
         } catch (error) {
             console.log(error);
@@ -96,8 +96,8 @@ export default class ChatScreen extends Component {
             // Remove the deleted message from the messages array
             const updatedMessages = this.state.messages.filter((msg) => msg.message_id !== messageId);
 
-            // Update the state
-            this.setState({ messages: updatedMessages }, this.loadMessages);
+            // Update the state, then loads the updated messages
+            this.setState({ messages: updatedMessages }, () => this.loadMessages);
         } catch (error) {
             console.log(error);
             this.setState({ error: error.message });
