@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, FlatList, ActivityIndicator, Modal } from 'react-native';
 import { getChatDetails, sendMessage, deleteMessage, updateMessage, addUserToChat, removeUserFromChat } from '../services/chatRequests';
+import { getContacts } from '../services/contactRequests';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -41,9 +42,10 @@ export default class ChatScreen extends Component {
         const { chatName } = route.params;
         const userId = await AsyncStorage.getItem('user_id');
 
-        
+
         this.setState({ chatId, userId, chatName }, () => {
             this.loadMessages();
+
         });
 
         // Add a listener for the focus event
@@ -77,11 +79,12 @@ export default class ChatScreen extends Component {
         try {
             const response = await sendMessage(chatId, newMessage);
             if (response.status === 200) {
-                // Add the new message to the messages array
-                const updatedMessages = [...this.state.messages, response.data];
+                // // Add the new message to the messages array
+                // const updatedMessages = [...this.state.messages, response.data];
 
-                // Update the state
-                this.setState({ messages: updatedMessages, newMessage: '' }, () => this.loadMessages);
+                // // Update the state
+                // this.setState({ messages: updatedMessages, newMessage: '' }, () => this.loadMessages);
+                this.loadMessages();
             }
         } catch (error) {
             console.log(error);
@@ -279,6 +282,7 @@ export default class ChatScreen extends Component {
                         contentContainerStyle={{ backgroundColor: '#F6F6F6', flexGrow: 1 }}
                         inverted
                     />
+                    {error && <Text style={styles.errorText}>{error}</Text>}
                     <View style={styles.inputContainer}>
                         <TextInput
                             style={styles.input}
@@ -286,7 +290,6 @@ export default class ChatScreen extends Component {
                             value={newMessage}
                             onChangeText={(text) => this.setState({ newMessage: text })}
                         />
-                        {error && <Text style={styles.errorText}>{error}</Text>}
                         <TouchableOpacity style={styles.sendButton} onPress={this.sendMessage}>
                             <Text style={styles.sendButtonText}>Send</Text>
                         </TouchableOpacity>
@@ -308,12 +311,13 @@ export default class ChatScreen extends Component {
                                             </Text>
                                             {item.user_id !== userId && (
                                                 <TouchableOpacity onPress={() => this.removeUserFromChat(item.user_id)}>
-                                                    <Icon name="delete" size={24} color="red" />
+                                                    <Icon name="minus" size={24} color="red" />
                                                 </TouchableOpacity>
                                             )}
                                         </View>
                                     )}
                                     ListEmptyComponent={() => <Text style={styles.noMembersText}>No members found.</Text>}
+                                    inverted
                                 />
                                 <View style={styles.inputContainer}>
                                     <TextInput
