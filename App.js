@@ -18,9 +18,9 @@ const Tab = createBottomTabNavigator();
 function ProfileStack() {
   return (
     <Stack.Navigator initialRouteName="Profile">
-      <Stack.Screen name="Profile" component={ProfileScreen} option={{ headerShown: false }} />
-      <Stack.Screen name="Camera" component={Camera} option={{ headerShown: false }} />
-      <Stack.Screen name="Login" component={LoginScreen} option={{ headerShown: false, headerLeft: null }}/>
+      <Stack.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Camera" component={Camera} />
+      <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false, headerLeft: null }} />
     </Stack.Navigator>
 
   )
@@ -47,9 +47,9 @@ function ContactsStack() {
 function MainTabs() {
   return (
     <Tab.Navigator>
-      <Tab.Screen name="Home" component={HomeStack} options={{ headerShown: false }} />
-      <Tab.Screen name="Profile" component={ProfileStack} options={{ headerShown: false }} />
-      <Tab.Screen name="Contacts" component={ContactsStack} options={{ headerShown: false }} />
+      <Tab.Screen name="Home" component={HomeStack}  />
+      <Tab.Screen name="Profile" component={ProfileStack} />
+      <Tab.Screen name="Contacts" component={ContactsStack} />
     </Tab.Navigator>
   );
 }
@@ -59,9 +59,9 @@ export default class App extends Component {
     return (
       <NavigationContainer>
         <Stack.Navigator initialRouteName='Login'>
-          <Stack.Screen name="Login" component={LoginScreen}/>
+          <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="SignUp" component={SignUp} />
-          <Stack.Screen name="Home" component={MainTabs} options={{ headerLeft: null }} />
+          <Stack.Screen name="Home" component={MainTabs} options={{ headerShown: false, headerLeft: null }} />
         </Stack.Navigator>
       </NavigationContainer>
     )
