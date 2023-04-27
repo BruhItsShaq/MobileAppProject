@@ -85,7 +85,7 @@ export const Logout = async () => {
         });
 
         if (response.status === 200) {
-            return true;
+            return response.status;
         } else if (response.status === 401) {
             const errorData = await response.text();
             console.error('Unauthorised', errorData);

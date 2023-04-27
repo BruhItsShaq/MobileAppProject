@@ -157,9 +157,8 @@ export const sendMessage = async (chat_id, message) => {
         });
 
         if (response.status === 200) {
-            const data = await response.text();
             await getChatDetails(chat_id);
-            return data;
+            return response;
         } else if (response.status === 400) {
             const errorData = await response.text();
             console.error('Bad request', errorData);

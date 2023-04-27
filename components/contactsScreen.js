@@ -47,10 +47,10 @@ export default class ContactsScreen extends Component {
     }
   };
 
-  handleAddContact = async () => {
-    const { newContactId } = this.state;
+  handleAddContact = async (user_id) => {
+    //const { newContactId } = this.state;
     try {
-      await addContact(newContactId);
+      await addContact(user_id);
       Alert.alert('Success', 'Contact added successfully.');
       this.setState({ modalVisible: false, newContactId: '' }, this.loadContacts);
     } catch (error) {
@@ -92,6 +92,11 @@ export default class ContactsScreen extends Component {
         <Text>
           {item.given_name} {item.family_name}
         </Text>
+        <View style={styles.contactButtons}>
+          <TouchableOpacity onPress={() => this.handleAddContact(item.user_id)}>
+            <MaterialIcons name="add" size={24} colour="blue" />
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
