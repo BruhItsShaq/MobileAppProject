@@ -196,7 +196,6 @@ export const deleteMessage = async (chat_id, message_id) => {
 
         if (response.status === 200) {
             const data = await response.text();
-            await getChatDetails(chat_id);
             return data;
         } else if (response.status === 401) {
             const errorData = await response.text();
@@ -236,7 +235,6 @@ export const updateMessage = async (chat_id, message_id, message) => {
 
         if (response.status === 200) {
             const data = await response.text();
-            await getChatDetails(chat_id);
             return data;
         } else if (response.status === 400) {
             const errorData = await response.text();
@@ -279,7 +277,6 @@ export const addUserToChat = async (chat_id, user_id) => {
 
         if (response.status === 200) {
             const data = await response.text();
-            await getChatDetails(chat_id);
             return data;
         } else if (response.status === 400) {
             const errorData = await response.text();

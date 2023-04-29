@@ -16,7 +16,10 @@ export default class ChatScreen extends Component {
             error: '',
             chatName: '',
             chatId: null,
+            contacts: [],
             messages: [],
+            members: [],
+            refresh: false,
             newMessage: '',
             isLoading: true,
             userId: null,
@@ -45,12 +48,14 @@ export default class ChatScreen extends Component {
 
         this.setState({ chatId, userId, chatName }, () => {
             this.loadMessages();
+            this.loadContacts();
 
         });
 
         // Add a listener for the focus event
         this._unsubscribe = this.props.navigation.addListener('focus', () => {
             this.loadMessages();
+            this.loadContacts();
         });
     }
 
@@ -63,11 +68,27 @@ export default class ChatScreen extends Component {
         this.setState((prevState) => ({ isModalVisible: !prevState.isModalVisible }));
     };
 
+    loadContacts = async () => {
+        try {
+            const contactData = await getContacts();
+            this.setState({ contacts: contactData });
+        } catch (error) {
+            this.setState({ error: error.message });
+        }
+    };
+
     loadMessages = async () => {
         const { chatId } = this.state;
         try {
             const messages = await getChatDetails(chatId);
-            this.setState({ messages, isLoading: false, error: null });
+            if (messages.status === 200) {
+                this.setState({ messages, members: messages.members, isLoading: false, error: null, refresh: !this.state.refresh });
+                console.log('Updated messages state:', this.state.messages);
+            } else {
+                console.log('error updating state');
+            }
+            // this.setState({ messages, members: messages.members, isLoading: false, error: null, refresh: !this.state.refresh });
+            // console.log('Updated messages state:', this.state.messages);
         } catch (error) {
             console.log(error);
             this.setState({ error: error.message });
@@ -84,6 +105,7 @@ export default class ChatScreen extends Component {
 
                 // // Update the state
                 // this.setState({ messages: updatedMessages, newMessage: '' }, () => this.loadMessages);
+                this.setState({ newMessage: " " })
                 this.loadMessages();
             }
         } catch (error) {
@@ -95,12 +117,13 @@ export default class ChatScreen extends Component {
     deleteMessage = async (messageId) => {
         const { chatId } = this.state;
         try {
-            await deleteMessage(chatId, messageId);
-            // Remove the deleted message from the messages array
-            const updatedMessages = this.state.messages.filter((msg) => msg.message_id !== messageId);
+            const response = await deleteMessage(chatId, messageId);
+            if (response.status === 200) {
+                // Remove the deleted message from the messages array
+                //const updatedMessages = Object.values(this.state.messages).filter((msg) => msg.message_id !== messageId);
 
-            // Update the state, then loads the updated messages
-            this.setState({ messages: updatedMessages }, () => this.loadMessages);
+                this.loadMessages();
+            }
         } catch (error) {
             console.log(error);
             this.setState({ error: error.message });
@@ -154,12 +177,8 @@ export default class ChatScreen extends Component {
         try {
             const response = await addUserToChat(chatId, userId);
             if (response.status === 200) {
-                // Add the new user to the chat in the state
-                const updatedChat = { ...this.state.chat };
-                updatedChat.users.push(response.data);
-
-                // Update the state
-                this.setState({ chat: updatedChat });
+                // Call the loadMessages function to fetch updated chat details
+                this.loadMessages();
             }
         } catch (error) {
             console.log(error);
@@ -172,12 +191,13 @@ export default class ChatScreen extends Component {
         try {
             const response = await removeUserFromChat(chatId, userId);
             if (response.status === 200) {
-                // Remove the user from the chat in the state
-                const updatedChat = { ...this.state.chat };
-                updatedChat.users = updatedChat.users.filter(user => user.user_id !== userId);
+                // // Remove the user from the chat in the state
+                // const updatedChat = { ...this.state.chat };
+                // updatedChat.users = updatedChat.users.filter(user => user.user_id !== userId);
 
-                // Update the state
-                this.setState({ chat: updatedChat });
+                // // Update the state
+                // this.setState({ chat: updatedChat });
+                this.loadMessages();
             }
         } catch (error) {
             console.log(error);
@@ -245,8 +265,23 @@ export default class ChatScreen extends Component {
         );
     };
 
+    renderContacts = ({ item }) => {
+        return (
+            <View style={styles.contactItem}>
+                <Text>
+                    {item.first_name} {item.last_name}
+                </Text>
+                <View style={styles.contactButtons}>
+                    <TouchableOpacity onPress={() => this.addUserToChat(item.user_id)}>
+                        <Icon name="plus" size={24} color="green" />
+                    </TouchableOpacity>
+                </View>
+            </View>
+        );
+    };
+
     render() {
-        const { messages, newMessage, isLoading, isModalVisible, newUserId, userId, error, chatName } = this.state;
+        const { messages, newMessage, isLoading, isModalVisible, newUserId, userId, error, chatName, contacts, members } = this.state;
         console.log('messages:', messages);
         console.log('newMessage:', newMessage);
 
@@ -300,36 +335,36 @@ export default class ChatScreen extends Component {
                     <Modal animationType="slide" transparent={true} visible={isModalVisible}>
                         <View style={styles.modalContainer}>
                             <View style={styles.modalContent}>
+                                <Text style={styles.modalTitle}>Contacts</Text>
+                                <FlatList
+                                    data={contacts}
+                                    renderItem={this.renderContacts}
+                                    keyExtractor={(item) => item.user_id.toString()}
+                                    ListEmptyComponent={<Text style={styles.text}>No contacts found</Text>}
+                                />
                                 <Text style={styles.modalTitle}>Members</Text>
                                 <FlatList
-                                    data={messages.members}
+                                    extraData={this.state.refresh}
+                                    data={members}
                                     keyExtractor={(item) => item.user_id.toString()}
-                                    renderItem={({ item }) => (
-                                        <View style={styles.memberItem}>
-                                            <Text style={styles.memberName}>
-                                                {item.first_name} {item.last_name}
-                                            </Text>
-                                            {item.user_id !== userId && (
-                                                <TouchableOpacity onPress={() => this.removeUserFromChat(item.user_id)}>
-                                                    <Icon name="minus" size={24} color="red" />
-                                                </TouchableOpacity>
-                                            )}
-                                        </View>
-                                    )}
+                                    renderItem={({ item }) => {
+                                        console.log('Rendering member:', item);
+                                        return (
+                                            <View style={styles.memberItem}>
+                                                <Text style={styles.memberName}>
+                                                    {item.first_name} {item.last_name}
+                                                </Text>
+                                                {item.user_id !== userId && (
+                                                    <TouchableOpacity onPress={() => this.removeUserFromChat(item.user_id)}>
+                                                        <Icon name="minus" size={24} color="red" />
+                                                    </TouchableOpacity>
+                                                )}
+                                            </View>
+                                        );
+                                    }}
                                     ListEmptyComponent={() => <Text style={styles.noMembersText}>No members found.</Text>}
                                     inverted
                                 />
-                                <View style={styles.inputContainer}>
-                                    <TextInput
-                                        style={styles.input}
-                                        placeholder={'User ID'}
-                                        value={newUserId}
-                                        onChangeText={(text) => this.setState({ newUserId: text })}
-                                    />
-                                    <TouchableOpacity style={styles.addButton} onPress={() => this.addUserToChat(newUserId)}>
-                                        <Text style={styles.addButtonText}>Add</Text>
-                                    </TouchableOpacity>
-                                </View>
                                 <TouchableOpacity style={styles.closeButton} onPress={this.toggleChatModal}>
                                     <Text style={styles.closeButtonText}>Close</Text>
                                 </TouchableOpacity>
