@@ -17,7 +17,7 @@ export default class ProfileScreen extends Component {
       last_name: '',
       email: '',
       password: '',
- //     profilePicture: null,
+      //     profilePicture: null,
       photo: '',
     };
 
@@ -26,9 +26,8 @@ export default class ProfileScreen extends Component {
 
   componentDidMount() {
     this._unsubscribe = this.props.navigation.addListener('focus', () => {
-      this.getUserProfilePhoto();
       this.getUserData();
-      //this.get_profile_image()
+      this.get_profile_image();
     });
   }
   componentWillUnmount() {
@@ -45,6 +44,7 @@ export default class ProfileScreen extends Component {
         first_name: userData.first_name,
         last_name: userData.last_name,
         email: userData.email,
+        password: userData.password,
       });
     } catch (error) {
       this.setState({ error: error.message, isLoading: false });
@@ -59,31 +59,31 @@ export default class ProfileScreen extends Component {
     this.props.navigation.navigate('Login');
   };
 
-  // async get_profile_image() {
-  //   const u_id = await AsyncStorage.getItem('user_id');
-  //   const session_token = await AsyncStorage.getItem('session_token');
+  async get_profile_image() {
+    const u_id = await AsyncStorage.getItem('user_id');
+    const session_token = await AsyncStorage.getItem('session_token');
 
-  //   fetch(`http://localhost:3333/api/1.0.0/user/${u_id}/photo`, {
-  //       method: "GET",
-  //       headers: {
-  //           "X-Authorization": session_token
-  //       }
-  //   })
-  //   .then((res) => {
-  //       return res.blob()
-  //   })
-  //   .then((resBlob) => {
-  //       let data = URL.createObjectURL(resBlob);
+    fetch(`http://localhost:3333/api/1.0.0/user/${u_id}/photo`, {
+      method: "GET",
+      headers: {
+        "X-Authorization": session_token
+      }
+    })
+      .then((res) => {
+        return res.blob()
+      })
+      .then((resBlob) => {
+        let data = URL.createObjectURL(resBlob);
 
-  //       this.setState({
-  //           photo: data,
-  //           isLoading: false
-  //       })
-  //   })
-  //   .catch((err) => {
-  //       console.log(err)
-  //   })
-  // }
+        this.setState({
+          photo: data,
+          isLoading: false
+        })
+      })
+      .catch((err) => {
+        console.log(err)
+      })
+  }
   getUserProfilePhoto = async () => {
     try {
       const photoData = await getProfilePicture();
@@ -161,9 +161,10 @@ export default class ProfileScreen extends Component {
             {!isEditing ? (
               <>
                 {photo ? (
-                  <Image source={{ uri: photo }} />
+                  <Image source={{ uri: photo }}
+                    style={styles.profilePicture} />
                 ) : (
-                  <Icon name="user" size={24} color="black"/>
+                  <Icon name="user" size={24} color="black" style={styles.profilePicture} />
                 )}
                 <TouchableOpacity style={styles.text} onPress={() => { this.props.navigation.navigate('Camera') }}>
                   <Text style={styles.text}>Upload picture</Text>
@@ -264,5 +265,11 @@ const styles = StyleSheet.create({
     margin: 5,
     position: 'absolute',
     bottom: 10
-  }
+  },
+  profilePicture: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    alignSelf: 'center',
+  },
 });
