@@ -21,7 +21,13 @@ export default class HomeScreen extends Component {
     }
 
     componentDidMount() {
-        this.loadChats();
+        this._unsubscribe = this.props.navigation.addListener('focus', () => {
+            this.loadChats();
+        });
+    }
+
+    componentWillUnmount() {
+        this._unsubscribe();
     }
 
     loadChats = async () => {
