@@ -35,7 +35,7 @@ export default function CameraSendToServer() {
             const response = await fetch(`http://localhost:3333/api/1.0.0/user/${id}/photo`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'image/png', // Or 'image/jpg'
+                    'Content-Type': 'image/png', 
                     'X-Authorization': token,
                 },
                 body: blob,

@@ -8,9 +8,12 @@ import {
   Modal,
   Alert,
   FlatList,
+  Image,
 } from 'react-native';
 import { getContacts, addContact, blockContact, deleteContact, searchUsers } from '../services/contactRequests';
-import { MaterialIcons, AntDesign } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { MaterialIcons } from '@expo/vector-icons';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 
 export default class ContactsScreen extends Component {
@@ -19,6 +22,7 @@ export default class ContactsScreen extends Component {
 
     this.state = {
       contacts: [],
+      contactPictures: {},
       error: '',
       modalVisible: false,
       newContactId: '',
@@ -41,18 +45,53 @@ export default class ContactsScreen extends Component {
   loadContacts = async () => {
     try {
       const contactData = await getContacts();
-      this.setState({ contacts: contactData });
+      this.setState({ contacts: contactData }, () => {
+        this.loadContactsPictures();
+      });
     } catch (error) {
       this.setState({ error: error.message });
     }
   };
+
+  loadContactsPictures = async () => {
+    const { contacts } = this.state;
+    const contactPictures = {};
+    for (const contact of contacts) {
+      try {
+        const profilePicture = await this.get_profile_image(contact.user_id);
+        contactPictures[contact.user_id] = profilePicture;
+      } catch (error) {
+        console.error(`Error getting profile photo for user_id: ${contact.user_id}`, error);
+      }
+    }
+    this.setState({ contactPictures });
+  }
+
+  async get_profile_image(u_id) {
+    const session_token = await AsyncStorage.getItem('session_token');
+    return fetch(`http://localhost:3333/api/1.0.0/user/${u_id}/photo`, {
+      method: "GET",
+      headers: {
+        "X-Authorization": session_token
+      }
+    })
+      .then((res) => {
+        return res.blob()
+      })
+      .then((resBlob) => {
+        return URL.createObjectURL(resBlob);
+      })
+      .catch((err) => {
+        console.log(err)
+      })
+  }
 
   handleAddContact = async (user_id) => {
     //const { newContactId } = this.state;
     try {
       await addContact(user_id);
       Alert.alert('Success', 'Contact added successfully.');
-      this.setState({ modalVisible: false, newContactId: '' }, this.loadContacts);
+      this.setState({ modalVisible: false, newContactId: '', error: '' }, this.loadContacts);
     } catch (error) {
       this.setState({ error: error.message });
     }
@@ -70,7 +109,7 @@ export default class ContactsScreen extends Component {
   handleBlockContact = async (user_id) => {
     try {
       await blockContact(user_id);
-      Alert.alert('Success', 'Contact blocked successfully.');
+      //     Alert.alert('Success', 'Contact blocked successfully.');
       this.loadContacts();
     } catch (error) {
       this.setState({ error: error.message });
@@ -80,15 +119,40 @@ export default class ContactsScreen extends Component {
   handleSearch = async () => {
     try {
       const results = await searchUsers(this.state.searchTerm);
-      this.setState({ searchResults: results });
+      this.setState({ searchResults: results }, () => {
+        this.searchResultPitures();
+      });
     } catch (error) {
       this.setState({ error: error.message });
     }
   };
 
+  searchResultPitures = async () => {
+    const { searchResults } = this.state;
+    const contactPictures = { ...this.state.contactPictures }; // Copy existing contact pictures to preserve the data
+    for (const contact of searchResults) {
+      try {
+        const profilePicture = await this.get_profile_image(contact.user_id);
+        contactPictures[contact.user_id] = profilePicture;
+      } catch (error) {
+        console.error(`Error getting profile photo for user_id: ${contact.user_id}`, error);
+      }
+    }
+    this.setState({ contactPictures });
+  };
+
+
   renderSearchItem = ({ item }) => {
+    const { contactPictures } = this.state;
+    const profilePicture = contactPictures[item.user_id];
+
     return (
       <View style={styles.contactItem}>
+        {profilePicture ? (
+          <Image source={{ uri: profilePicture }} style={styles.profilePicture} />
+        ) : (
+          <Icon name="user" size={24} color="black" />
+        )}
         <Text>
           {item.given_name} {item.family_name}
         </Text>
@@ -102,8 +166,16 @@ export default class ContactsScreen extends Component {
   }
 
   renderItem = ({ item }) => {
+    const { contactPictures } = this.state;
+    const profilePicture = contactPictures[item.user_id];
+
     return (
       <View style={styles.contactItem}>
+        {profilePicture ? (
+          <Image source={{ uri: profilePicture }} style={styles.profilePicture} />
+        ) : (
+          <Icon name="user" size={24} color="black" />
+        )}
         <Text>
           {item.first_name} {item.last_name}
         </Text>
@@ -159,7 +231,7 @@ export default class ContactsScreen extends Component {
             </View>
           )}
         </>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.fab}
           onPress={() => this.setState({ modalVisible: true })}
         >
@@ -189,7 +261,7 @@ export default class ContactsScreen extends Component {
         </Modal>
         <TouchableOpacity style={styles.blockedContactsButton} onPress={() => { this.props.navigation.navigate('Blocked') }}>
           <AntDesign name="lock" size={24} color="black" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     );
   }
@@ -296,5 +368,11 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: 'white',
     marginLeft: 5,
+  },
+  profilePicture: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
   },
 });
