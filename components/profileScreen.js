@@ -17,7 +17,7 @@ export default class ProfileScreen extends Component {
       last_name: '',
       email: '',
       password: '',
-      profilePicture: null,
+ //     profilePicture: null,
       photo: '',
     };
 
