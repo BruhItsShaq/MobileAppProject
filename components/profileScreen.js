@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TextInput, TouchableOpacity, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getProfile, updateProfile, Logout, getProfilePicture } from '../services/profileRequests';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 export default class ProfileScreen extends Component {
   constructor(props) {
@@ -17,16 +18,21 @@ export default class ProfileScreen extends Component {
       email: '',
       password: '',
       profilePicture: null,
-      photo: null,
+      photo: '',
     };
 
     this.handleDelete = this.handleDelete.bind(this);
   }
 
-  async componentDidMount() {
-    // await this.getUserProfilePhoto();
-    await this.getUserData();
-    this.get_profile_image()
+  componentDidMount() {
+    this._unsubscribe = this.props.navigation.addListener('focus', () => {
+      this.getUserProfilePhoto();
+      this.getUserData();
+      //this.get_profile_image()
+    });
+  }
+  componentWillUnmount() {
+    this._unsubscribe();
   }
 
   async getUserData() {
@@ -53,43 +59,43 @@ export default class ProfileScreen extends Component {
     this.props.navigation.navigate('Login');
   };
 
-  async get_profile_image() {
-    const u_id = await AsyncStorage.getItem('user_id');
-    const session_token = await AsyncStorage.getItem('session_token');
+  // async get_profile_image() {
+  //   const u_id = await AsyncStorage.getItem('user_id');
+  //   const session_token = await AsyncStorage.getItem('session_token');
 
-    fetch(`http://localhost:3333/api/1.0.0/user/${u_id}/photo`, {
-        method: "GET",
-        headers: {
-            "X-Authorization": session_token
-        }
-    })
-    .then((res) => {
-        return res.blob()
-    })
-    .then((resBlob) => {
-        let data = URL.createObjectURL(resBlob);
+  //   fetch(`http://localhost:3333/api/1.0.0/user/${u_id}/photo`, {
+  //       method: "GET",
+  //       headers: {
+  //           "X-Authorization": session_token
+  //       }
+  //   })
+  //   .then((res) => {
+  //       return res.blob()
+  //   })
+  //   .then((resBlob) => {
+  //       let data = URL.createObjectURL(resBlob);
 
-        this.setState({
-            photo: data,
-            isLoading: false
-        })
-    })
-    .catch((err) => {
-        console.log(err)
-    })
-  }
-  // getUserProfilePhoto = async () => {
-  //   try {
-  //     const photoData = await getProfilePicture();
-  //     console.log('This is photodata:', photoData);
-  //     this.setState({
-  //       profilePicture: photoData,
-  //     });
-  //   } catch (error) {
-  //     console.error('Error getting profile photo', error);
-  //     throw new Error('An error occurred while getting the profile photo. Please try again.');
-  //   }
+  //       this.setState({
+  //           photo: data,
+  //           isLoading: false
+  //       })
+  //   })
+  //   .catch((err) => {
+  //       console.log(err)
+  //   })
   // }
+  getUserProfilePhoto = async () => {
+    try {
+      const photoData = await getProfilePicture();
+      console.log('This is photodata:', photoData);
+      this.setState({
+        photo: photoData,
+      });
+    } catch (error) {
+      console.error('Error getting profile photo', error);
+      throw new Error('An error occurred while getting the profile photo. Please try again.');
+    }
+  }
 
   handleEdit = () => {
     this.setState({ isEditing: true });
@@ -154,7 +160,11 @@ export default class ProfileScreen extends Component {
           <>
             {!isEditing ? (
               <>
-                <Image source={{ uri:photo}} />
+                {photo ? (
+                  <Image source={{ uri: photo }} />
+                ) : (
+                  <Icon name="user" size={24} color="black"/>
+                )}
                 <TouchableOpacity style={styles.text} onPress={() => { this.props.navigation.navigate('Camera') }}>
                   <Text style={styles.text}>Upload picture</Text>
                 </TouchableOpacity>

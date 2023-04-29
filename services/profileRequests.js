@@ -43,7 +43,7 @@ export const getProfilePicture = async () => {
         const response = await fetch(`http://localhost:3333/api/1.0.0/user/${u_id}/photo`, {
             method: 'GET',
             headers: {
-                'Content-Type': 'image/png',
+                'Accept': 'image/png',
                 'X-Authorization': session_token,
             },
         });
