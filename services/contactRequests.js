@@ -189,7 +189,7 @@ export const unblockContact = async (user_id) => {
     }
 };
 
-export const searchUsers = async (query, searchIn, limit = 20, offset = 0) => {
+export const searchUsers = async (query, limit = 20, offset = 0) => {
     const sessionToken = await AsyncStorage.getItem('session_token');
 
 

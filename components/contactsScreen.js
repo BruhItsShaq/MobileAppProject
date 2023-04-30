@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { getContacts, addContact, blockContact, deleteContact, searchUsers } from '../services/contactRequests';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons, AntDesign } from '@expo/vector-icons';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 
@@ -27,7 +27,9 @@ export default class ContactsScreen extends Component {
       modalVisible: false,
       newContactId: '',
       searchResults: [],
-      searchTerm: ''
+      searchTerm: '',
+      searchLimit: '20',
+      searchOffset: '0',
     };
   }
 
@@ -118,7 +120,7 @@ export default class ContactsScreen extends Component {
 
   handleSearch = async () => {
     try {
-      const results = await searchUsers(this.state.searchTerm);
+      const results = await searchUsers(this.state.searchTerm, parseInt(this.state.searchLimit), parseInt(this.state.searchOffset));
       this.setState({ searchResults: results }, () => {
         this.searchResultPitures();
       });
@@ -192,7 +194,7 @@ export default class ContactsScreen extends Component {
   };
 
   render() {
-    const { contacts, error, modalVisible, newContactId, searchResults, searchTerm } = this.state;
+    const { contacts, error, modalVisible, newContactId, searchResults, searchTerm, searchLimit, searchOffset } = this.state;
 
     console.log('Search results:', searchResults);
     return (
@@ -209,6 +211,23 @@ export default class ContactsScreen extends Component {
             <MaterialIcons name="search" size={24} color="black" />
           </TouchableOpacity>
         </View>
+        <View style={styles.limitOffsetContainer}>
+          <TextInput
+            style={styles.limitOffsetInput}
+            placeholder="Limit"
+            //   value={this.state.searchLimit}
+            keyboardType="number-pad"
+            onChangeText={(text) => this.setState({ searchLimit: text })}
+          />
+          <TextInput
+            style={styles.limitOffsetInput}
+            placeholder="Offset"
+            //   value={this.state.searchOffset}
+            keyboardType="number-pad"
+            onChangeText={(text) => this.setState({ searchOffset: text })}
+          />
+        </View>
+
         {searchTerm && searchResults.length > 0 ? (
           <FlatList
             data={searchResults}
@@ -258,10 +277,10 @@ export default class ContactsScreen extends Component {
               </TouchableOpacity>
             </View>
           </View>
-        </Modal>
+        </Modal>*/}
         <TouchableOpacity style={styles.blockedContactsButton} onPress={() => { this.props.navigation.navigate('Blocked') }}>
           <AntDesign name="lock" size={24} color="black" />
-        </TouchableOpacity> */}
+        </TouchableOpacity>
       </View>
     );
   }
@@ -374,5 +393,19 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     marginRight: 10,
+  },
+  limitOffsetContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginLeft: 10,
+  },
+  limitOffsetInput: {
+    borderWidth: 1,
+    borderColor: 'black',
+    borderRadius: 5,
+    width: 50,
+    padding: 3,
+    fontSize: 12,
+    textAlign: 'center',
   },
 });
