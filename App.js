@@ -18,9 +18,9 @@ const Tab = createBottomTabNavigator();
 function ProfileStack() {
   return (
     <Stack.Navigator initialRouteName="Profile">
-      <Stack.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="MainProfile" component={ProfileScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Camera" component={Camera} />
-      <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false, headerLeft: null }} />
+      <Stack.Screen name="MainLogin" component={LoginScreen} options={{ headerShown: false, headerLeft: null }} />
     </Stack.Navigator>
 
   )
@@ -29,7 +29,7 @@ function ProfileStack() {
 function HomeStack() {
   return (
     <Stack.Navigator initialRouteName="Home">
-      <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ChatHome" component={HomeScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
@@ -38,7 +38,7 @@ function HomeStack() {
 function ContactsStack() {
   return (
     <Stack.Navigator initialRouteName="Contacts">
-      <Stack.Screen name="Contacts" component={ContactsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="MainContacts" component={ContactsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Blocked" component={BlockedScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
@@ -61,7 +61,7 @@ export default class App extends Component {
         <Stack.Navigator initialRouteName='Login'>
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="SignUp" component={SignUp} />
-          <Stack.Screen name="Home" component={MainTabs} options={{ headerShown: false, headerLeft: null }} />
+          <Stack.Screen name="MainHome" component={MainTabs} options={{ headerShown: false, headerLeft: null }} />
         </Stack.Navigator>
       </NavigationContainer>
     )
