@@ -14,7 +14,19 @@ export default class LoginScreen extends Component {
             submitted: false
         }
 
+
         this._onPressButton = this._onPressButton.bind(this)
+    }
+
+    async componentDidMount() {
+        try {
+            const uId = await AsyncStorage.getItem('user_id');
+            if (uId !== null) {
+                this.props.navigation.navigate('Home');
+            }
+        } catch (error) {
+            console.error('Error retrieving userId from AsyncStorage:', error);
+        }
     }
 
     navigateToSignUp = () => {
@@ -79,7 +91,7 @@ export default class LoginScreen extends Component {
                     return;
                 }
 
-                this.props.navigation.navigate('Home');
+                this.props.navigation.navigate('MainHome');
 
             } else if (response.status === 400) {
                 console.error('Error logging in: Invalid email or password');
