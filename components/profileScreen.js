@@ -1,8 +1,15 @@
+/* eslint-disable no-use-before-define */
+/* eslint-disable camelcase */
 import React, { Component } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TextInput, TouchableOpacity, Image } from 'react-native';
+import {
+  View, Text, StyleSheet, ActivityIndicator, TextInput, TouchableOpacity, Image,
+} from 'react-native';
+import PropTypes from 'prop-types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getProfile, updateProfile, Logout, getProfilePicture } from '../services/profileRequests';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import {
+  getProfile, updateProfile, Logout,
+} from '../services/profileRequests';
 
 export default class ProfileScreen extends Component {
   constructor(props) {
@@ -17,7 +24,6 @@ export default class ProfileScreen extends Component {
       last_name: '',
       email: '',
       password: '',
-      //     profilePicture: null,
       photo: '',
     };
 
@@ -25,19 +31,21 @@ export default class ProfileScreen extends Component {
   }
 
   componentDidMount() {
-    this._unsubscribe = this.props.navigation.addListener('focus', () => {
+    const { navigation } = this.props;
+    this._unsubscribe = navigation.addListener('focus', () => {
       this.getUserData();
       this.get_profile_image();
     });
   }
+
   componentWillUnmount() {
     this._unsubscribe();
   }
 
   async getUserData() {
     try {
-      const u_id = await AsyncStorage.getItem('user_id');
-      const userData = await getProfile(u_id);
+      const uId = await AsyncStorage.getItem('user_id');
+      const userData = await getProfile(uId);
       this.setState({
         user: userData,
         isLoading: false,
@@ -51,50 +59,28 @@ export default class ProfileScreen extends Component {
     }
   }
 
-  gotoCamera() {
-    this.props.navigation.navigate('Camera');
-  }
-
-  backToLogin() {
-    this.props.navigation.navigate('Login');
-  };
-
   async get_profile_image() {
-    const u_id = await AsyncStorage.getItem('user_id');
-    const session_token = await AsyncStorage.getItem('session_token');
+    const uId = await AsyncStorage.getItem('user_id');
+    const sessionToken = await AsyncStorage.getItem('session_token');
 
-    fetch(`http://localhost:3333/api/1.0.0/user/${u_id}/photo`, {
-      method: "GET",
+    fetch(`http://localhost:3333/api/1.0.0/user/${uId}/photo`, {
+      method: 'GET',
       headers: {
-        "X-Authorization": session_token
-      }
+        'X-Authorization': sessionToken,
+      },
     })
-      .then((res) => {
-        return res.blob()
-      })
+      .then((res) => res.blob())
       .then((resBlob) => {
-        let data = URL.createObjectURL(resBlob);
+        const data = URL.createObjectURL(resBlob);
 
         this.setState({
           photo: data,
-          isLoading: false
-        })
+          isLoading: false,
+        });
       })
       .catch((err) => {
-        console.log(err)
-      })
-  }
-  getUserProfilePhoto = async () => {
-    try {
-      const photoData = await getProfilePicture();
-      console.log('This is photodata:', photoData);
-      this.setState({
-        photo: photoData,
+        console.log(err);
       });
-    } catch (error) {
-      console.error('Error getting profile photo', error);
-      throw new Error('An error occurred while getting the profile photo. Please try again.');
-    }
   }
 
   handleEdit = () => {
@@ -102,18 +88,33 @@ export default class ProfileScreen extends Component {
   };
 
   handleSubmit = async () => {
-    const { user, first_name, last_name, email, password } = this.state;
+    const {
+      user, first_name, last_name, email, password,
+    } = this.state;
+    const changed = {};
+
+    // Edited field validation
+    if (first_name.trim() === '' || last_name.trim() === '' || email.trim() === '' || password.trim() === '') {
+      this.setState({ error: 'All fields must be filled in.' });
+      return;
+    }
+
+    if (first_name !== user.first_name) changed.first_name = first_name;
+    if (last_name !== user.last_name) changed.last_name = last_name;
+    if (email !== user.email) changed.email = email;
+    if (password) changed.password = password;
+
     const profileData = {
-      first_name: first_name,
-      last_name: last_name,
-      email: email,
-      password: password,
+      first_name,
+      last_name,
+      email,
+      password,
     };
 
     console.log(profileData);
 
     try {
-      const response = await updateProfile(user.user_id, profileData);
+      const response = await updateProfile(user.user_id, changed);
       console.log(response);
       this.setState({ isEditing: false });
       await this.getUserData();
@@ -134,7 +135,7 @@ export default class ProfileScreen extends Component {
     } catch (error) {
       this.setState({ error: error.message });
     }
-  }
+  };
 
   handleCancel = () => {
     const { user } = this.state;
@@ -147,10 +148,18 @@ export default class ProfileScreen extends Component {
     });
   };
 
-  render() {
-    const { user, error, isLoading, isEditing, first_name, last_name, email, password, photo } = this.state;
+  backToLogin() {
+    const { navigation } = this.props;
 
-    console.log("profile picture:", photo);
+    navigation.navigate('Login');
+  }
+
+  render() {
+    const {
+      user, error, isLoading, isEditing, first_name, last_name, email, password, photo, navigation,
+    } = this.state;
+
+    console.log('profile picture:', photo);
     return (
       <View style={styles.container}>
         <Text style={styles.title}>Profile</Text>
@@ -161,16 +170,28 @@ export default class ProfileScreen extends Component {
             {!isEditing ? (
               <>
                 {photo ? (
-                  <Image source={{ uri: photo }}
-                    style={styles.profilePicture} />
+                  <Image
+                    source={{ uri: photo }}
+                    style={styles.profilePicture}
+                  />
                 ) : (
                   <Icon name="user" size={24} color="black" style={styles.profilePicture} />
                 )}
-                <TouchableOpacity style={styles.text} onPress={() => { this.props.navigation.navigate('Camera') }}>
+                <TouchableOpacity style={styles.text} onPress={() => { navigation.navigate('Camera'); }}>
                   <Text style={styles.text}>Upload picture</Text>
                 </TouchableOpacity>
-                <Text style={styles.text}>Name: {user.first_name} {user.last_name}</Text>
-                <Text style={styles.text}>Email: {user.email}</Text>
+                <Text style={styles.text}>
+                  Name:
+                  {' '}
+                  {user.first_name}
+                  {' '}
+                  {user.last_name}
+                </Text>
+                <Text style={styles.text}>
+                  Email:
+                  {' '}
+                  {user.email}
+                </Text>
                 <TouchableOpacity style={styles.button} onPress={this.handleEdit}>
                   <Text style={styles.buttonText}>Edit Profile</Text>
                 </TouchableOpacity>
@@ -203,7 +224,7 @@ export default class ProfileScreen extends Component {
                   placeholder="Please enter password"
                   value={password}
                   onChangeText={(text) => this.setState({ password: text })}
-                  secureTextEntry={true}
+                  secureTextEntry
                 />
                 <TouchableOpacity style={styles.button} onPress={this.handleSubmit}>
                   <Text style={styles.buttonText}>Submit</Text>
@@ -220,6 +241,13 @@ export default class ProfileScreen extends Component {
     );
   }
 }
+
+ProfileScreen.propTypes = {
+  navigation: PropTypes.shape({
+    navigate: PropTypes.func.isRequired,
+    addListener: PropTypes.func.isRequired,
+  }).isRequired,
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -264,7 +292,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     margin: 5,
     position: 'absolute',
-    bottom: 10
+    bottom: 10,
   },
   profilePicture: {
     width: 50,

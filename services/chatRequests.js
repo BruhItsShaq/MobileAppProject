@@ -1,342 +1,293 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const fetchChats = async () => {
-    const session_token = await AsyncStorage.getItem('session_token');
-    const u_id = await AsyncStorage.getItem('user_id');
-    console.log('Session token retrieved:', session_token);
-    try {
-        const response = await fetch('http://localhost:3333/api/1.0.0/chat', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Authorization': session_token,
-            },
-        });
-        if (response.status === 200) {
-            const data = await response.json();
-            return data;
-        } else {
-            const errorData = await response.json();
-            console.error('Error fetching chats', errorData);
-            throw new Error('An error occurred while fetching chats. Please try again.');
-        }
-    } catch (error) {
-        console.error('Error fetching chats', error);
-        throw new Error('An error occurred while fetching chats. Please try again.');
-    }
+  const sessionToken = await AsyncStorage.getItem('session_token');
+  console.log('Session token retrieved:', sessionToken);
+
+  const response = await fetch('http://localhost:3333/api/1.0.0/chat', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Authorization': sessionToken,
+    },
+  });
+  if (response.status === 200) {
+    const data = await response.json();
+    return data;
+  }
+  const errorData = await response.text();
+  console.error('Error fetching chats', errorData);
+  throw new Error('An error occurred while fetching chats. Please try again.');
 };
 
 export const createChat = async (name) => {
-    const session_token = await AsyncStorage.getItem('session_token');
-    console.log('Session token retrieved:', session_token);
+  const sessionToken = await AsyncStorage.getItem('session_token');
+  console.log('Session token retrieved:', sessionToken);
 
-    try {
-        const response = await fetch('http://localhost:3333/api/1.0.0/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Authorization': session_token,
-            },
-            body: JSON.stringify({ name }),
-        });
+  const response = await fetch('http://localhost:3333/api/1.0.0/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Authorization': sessionToken,
+    },
+    body: JSON.stringify({ name }),
+  });
 
-        if (response.status === 201) {
-            const data = await response.json();
-            return data;
-        } else if (response.status === 400) {
-            const errorData = await response.json();
-            console.error('Bad request', errorData);
-            throw new Error('Bad request. Please try again.');
-        } else if (response.status === 401) {
-            const errorData = await response.json();
-            console.error('Unauthorised', errorData);
-            throw new Error('Unauthorised. Please log in and try again.');
-        } else {
-            const errorData = await response.json();
-            console.error('Server error', errorData);
-            throw new Error('Server error. Please try again later.');
-        }
-    } catch (error) {
-        console.error('Error creating chat', error);
-        throw new Error('An error occurred while creating the chat. Please try again.');
-    }
+  if (response.status === 201) {
+    const data = await response.json();
+    return data;
+  } if (response.status === 400) {
+    const errorData = await response.json();
+    console.error('Bad request', errorData);
+    throw new Error('Bad request. Please try again.');
+  } else if (response.status === 401) {
+    const errorData = await response.json();
+    console.error('Unauthorised', errorData);
+    throw new Error('Unauthorised. Please log in and try again.');
+  } else {
+    const errorData = await response.json();
+    console.error('Server error', errorData);
+    throw new Error('Server error. Please try again later.');
+  }
 };
-export const updateChatName = async (chat_id, name) => {
-    const session_token = await AsyncStorage.getItem('session_token');
+export const updateChatName = async (chatId, name) => {
+  const sessionToken = await AsyncStorage.getItem('session_token');
 
-    try {
-        const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Authorization': session_token,
-            },
-            body: JSON.stringify({ name }),
-        });
+  const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chatId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Authorization': sessionToken,
+    },
+    body: JSON.stringify({ name }),
+  });
 
-        if (response.status === 200) {
-            const data = await response.text();
-            return data;
-        } else if (response.status === 400) {
-            const errorData = await response.text();
-            console.error('Bad request', errorData);
-            throw new Error('Bad request. Please try again.');
-        } else if (response.status === 401) {
-            const errorData = await response.text();
-            console.error('Unauthorised', errorData);
-            throw new Error('Unauthorised. Please log in and try again.');
-        } else if (response.status === 403) {
-            const errorData = await response.text();
-            console.error('Forbidden', errorData);
-            throw new Error('Forbidden. You do not have permission to update this chat.');
-        } else if (response.status === 404) {
-            const errorData = await response.text();
-            console.error('Not found', errorData);
-            throw new Error('Chat not found.');
-        } else {
-            const errorData = await response.text();
-            console.error('Server error', errorData);
-            throw new Error('Server error. Please try again later.');
-        }
-    } catch (error) {
-        console.error('Error updating chat name', error);
-        throw new Error('An error occurred while updating the chat name. Please try again.');
-    }
+  if (response.status === 200) {
+    const data = await response.text();
+    return data;
+  } if (response.status === 400) {
+    const errorData = await response.text();
+    console.error('Bad request', errorData);
+    throw new Error('Bad request. Please try again.');
+  } else if (response.status === 401) {
+    const errorData = await response.text();
+    console.error('Unauthorised', errorData);
+    throw new Error('Unauthorised. Please log in and try again.');
+  } else if (response.status === 403) {
+    const errorData = await response.text();
+    console.error('Forbidden', errorData);
+    throw new Error('Forbidden. You do not have permission to update this chat.');
+  } else if (response.status === 404) {
+    const errorData = await response.text();
+    console.error('Not found', errorData);
+    throw new Error('Chat not found.');
+  } else {
+    const errorData = await response.text();
+    console.error('Server error', errorData);
+    throw new Error('Server error. Please try again later.');
+  }
 };
 
-export const getChatDetails = async (chat_id, limit = 20, offset = 0) => {
-    const session_token = await AsyncStorage.getItem('session_token');
-    try {
-        const response = await fetch(
-            `http://localhost:3333/api/1.0.0/chat/${chat_id}?limit=${limit}&offset=${offset}`,
-            {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Authorization': session_token,
-                },
-            }
-        );
-        if (response.status === 200) {
-            const data = await response.json();
-            return data;
-        } else if (response.status === 401) {
-            const errorData = await response.text();
-            console.error('Unauthorised', errorData);
-            throw new Error('Unauthorised. Please log in and try again.');
-        } else if (response.status === 403) {
-            const errorData = await response.text();
-            console.error('Forbidden', errorData);
-            throw new Error('Forbidden. You do not have permission to view this chat.');
-        } else if (response.status === 404) {
-            const errorData = await response.text();
-            console.error('Not found', errorData);
-            throw new Error('Chat not found.');
-        } else {
-            const errorData = await response.text();
-            console.error('Server error', errorData);
-            throw new Error('Server error. Please try again later.');
-        }
-    } catch (error) {
-        console.error('Error getting chat details', error);
-        throw new Error('An error occurred while getting chat details. Please try again.');
-    }
+export const getChatDetails = async (chatId, limit = 20, offset = 0) => {
+  const sessionToken = await AsyncStorage.getItem('session_token');
+  const response = await fetch(
+    `http://localhost:3333/api/1.0.0/chat/${chatId}?limit=${limit}&offset=${offset}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Authorization': sessionToken,
+      },
+    },
+  );
+  if (response.status === 200) {
+    const data = await response.json();
+    return data;
+  } if (response.status === 401) {
+    const errorData = await response.text();
+    console.error('Unauthorised', errorData);
+    throw new Error('Unauthorised. Please log in and try again.');
+  } else if (response.status === 403) {
+    const errorData = await response.text();
+    console.error('Forbidden', errorData);
+    throw new Error('Forbidden. You do not have permission to view this chat.');
+  } else if (response.status === 404) {
+    const errorData = await response.text();
+    console.error('Not found', errorData);
+    throw new Error('Chat not found.');
+  } else {
+    const errorData = await response.text();
+    console.error('Server error', errorData);
+    throw new Error('Server error. Please try again later.');
+  }
 };
 
-export const sendMessage = async (chat_id, message) => {
-    const session_token = await AsyncStorage.getItem('session_token');
+export const sendMessage = async (chatId, message) => {
+  const sessionToken = await AsyncStorage.getItem('session_token');
 
-    try {
-        const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}/message`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Authorization': session_token,
-            },
-            body: JSON.stringify({ message }),
-        });
+  const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chatId}/message`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Authorization': sessionToken,
+    },
+    body: JSON.stringify({ message }),
+  });
 
-        if (response.status === 200) {
-            await getChatDetails(chat_id);
-            return response;
-        } else if (response.status === 400) {
-            const errorData = await response.text();
-            console.error('Bad request', errorData);
-            throw new Error('Bad request. Please try again.');
-        } else if (response.status === 401) {
-            const errorData = await response.text();
-            console.error('Unauthorised', errorData);
-            throw new Error('Unauthorised. Please log in and try again.');
-        } else if (response.status === 403) {
-            const errorData = await response.text();
-            console.error('Forbidden', errorData);
-            throw new Error('Forbidden. You do not have permission to send messages to this chat.');
-        } else {
-            const errorData = await response.text();
-            console.error('Server error', errorData);
-            throw new Error('Server error. Please try again later.');
-        }
-    } catch (error) {
-        console.error('Error sending message', error);
-        throw new Error('An error occurred while sending the message. Please try again.');
-    }
+  if (response.status === 200) {
+    return response;
+  } if (response.status === 400) {
+    const errorData = await response.text();
+    console.error('Bad request', errorData);
+    throw new Error('Bad request. Please try again.');
+  } else if (response.status === 401) {
+    const errorData = await response.text();
+    console.error('Unauthorised', errorData);
+    throw new Error('Unauthorised. Please log in and try again.');
+  } else if (response.status === 403) {
+    const errorData = await response.text();
+    console.error('Forbidden', errorData);
+    throw new Error('Forbidden. You do not have permission to send messages to this chat.');
+  } else {
+    const errorData = await response.text();
+    console.error('Server error', errorData);
+    throw new Error('Server error. Please try again later.');
+  }
 };
 
-export const deleteMessage = async (chat_id, message_id) => {
-    const session_token = await AsyncStorage.getItem('session_token');
+export const deleteMessage = async (chatId, messageId) => {
+  const sessionToken = await AsyncStorage.getItem('session_token');
 
-    try {
-        const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}/message/${message_id}`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Authorization': session_token,
-            },
-        });
+  const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chatId}/message/${messageId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Authorization': sessionToken,
+    },
+  });
 
-        if (response.status === 200) {
-            const data = await response.text();
-            return data;
-        } else if (response.status === 401) {
-            const errorData = await response.text();
-            console.error('Unauthorised', errorData);
-            throw new Error('Unauthorised. Please log in and try again.');
-        } else if (response.status === 403) {
-            const errorData = await response.text();
-            console.error('Forbidden', errorData);
-            throw new Error('Forbidden. You do not have permission to delete messages in this chat.');
-        } else if (response.status === 404) {
-            const errorData = await response.text();
-            console.error('Not Found', errorData);
-            throw new Error('Message not found. Please try again.');
-        } else {
-            const errorData = await response.text();
-            console.error('Server error', errorData);
-            throw new Error('Server error. Please try again later.');
-        }
-    } catch (error) {
-        console.error('Error deleting message', error);
-        throw new Error('An error occurred while deleting the message. Please try again.');
-    }
+  if (response.status === 200) {
+    return response;
+  } if (response.status === 401) {
+    const errorData = await response.text();
+    console.error('Unauthorised', errorData);
+    throw new Error('Unauthorised. Please log in and try again.');
+  } else if (response.status === 403) {
+    const errorData = await response.text();
+    console.error('Forbidden', errorData);
+    throw new Error('Forbidden. You do not have permission to delete messages in this chat.');
+  } else if (response.status === 404) {
+    const errorData = await response.text();
+    console.error('Not Found', errorData);
+    throw new Error('Message not found. Please try again.');
+  } else {
+    const errorData = await response.text();
+    console.error('Server error', errorData);
+    throw new Error('Server error. Please try again later.');
+  }
 };
 
-export const updateMessage = async (chat_id, message_id, message) => {
-    const session_token = await AsyncStorage.getItem('session_token');
+export const updateMessage = async (chatId, messageId, message) => {
+  const sessionToken = await AsyncStorage.getItem('session_token');
 
-    try {
-        const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}/message/${message_id}`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Authorization': session_token,
-            },
-            body: JSON.stringify({ message }),
-        });
+  const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chatId}/message/${messageId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Authorization': sessionToken,
+    },
+    body: JSON.stringify({ message }),
+  });
 
-        if (response.status === 200) {
-            const data = await response.text();
-            return data;
-        } else if (response.status === 400) {
-            const errorData = await response.text();
-            console.error('Bad request', errorData);
-            throw new Error('Bad request. Please try again.');
-        } else if (response.status === 401) {
-            const errorData = await response.text();
-            console.error('Unauthorised', errorData);
-            throw new Error('Unauthorised. Please log in and try again.');
-        } else if (response.status === 403) {
-            const errorData = await response.text();
-            console.error('Forbidden', errorData);
-            throw new Error('Forbidden. You do not have permission to update messages in this chat.');
-        } else if (response.status === 404) {
-            const errorData = await response.text();
-            console.error('Not Found', errorData);
-            throw new Error('Message not found. Please try again.');
-        } else {
-            const errorData = await response.text();
-            console.error('Server error', errorData);
-            throw new Error('Server error. Please try again later.');
-        }
-    } catch (error) {
-        console.error('Error updating message', error);
-        throw new Error('An error occurred while updating the message. Please try again.');
-    }
+  if (response.status === 200) {
+    const data = await response.text();
+    return data;
+  } if (response.status === 400) {
+    const errorData = await response.text();
+    console.error('Bad request', errorData);
+    throw new Error('Bad request. Please try again.');
+  } else if (response.status === 401) {
+    const errorData = await response.text();
+    console.error('Unauthorised', errorData);
+    throw new Error('Unauthorised. Please log in and try again.');
+  } else if (response.status === 403) {
+    const errorData = await response.text();
+    console.error('Forbidden', errorData);
+    throw new Error('Forbidden. You do not have permission to update messages in this chat.');
+  } else if (response.status === 404) {
+    const errorData = await response.text();
+    console.error('Not Found', errorData);
+    throw new Error('Message not found. Please try again.');
+  } else {
+    const errorData = await response.text();
+    console.error('Server error', errorData);
+    throw new Error('Server error. Please try again later.');
+  }
 };
 
-export const addUserToChat = async (chat_id, user_id) => {
-    const session_token = await AsyncStorage.getItem('session_token');
+export const addUserToChat = async (chatId, userId) => {
+  const sessionToken = await AsyncStorage.getItem('session_token');
 
-    try {
-        const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}/user/${user_id}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Authorization': session_token,
-            },
-        });
+  const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chatId}/user/${userId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Authorization': sessionToken,
+    },
+  });
 
-        if (response.status === 200) {
-            const data = await response.text();
-            return data;
-        } else if (response.status === 400) {
-            const errorData = await response.text();
-            console.error('Bad request', errorData);
-            throw new Error('Bad request. Please try again.');
-        } else if (response.status === 401) {
-            const errorData = await response.text();
-            console.error('Unauthorised', errorData);
-            throw new Error('Unauthorised. Please log in and try again.');
-        } else if (response.status === 404) {
-            const errorData = await response.text();
-            console.error('Not found', errorData);
-            throw new Error('Not found. Please try again with valid chat and user IDs.');
-        } else {
-            const errorData = await response.text();
-            console.error('Server error', errorData);
-            throw new Error('Server error. Please try again later.');
-        }
-    } catch (error) {
-        console.error('Error adding user to chat', error);
-        throw new Error('An error occurred while adding the user to the chat. Please try again.');
-    }
+  if (response.status === 200) {
+    const data = await response.text();
+    return data;
+  } if (response.status === 400) {
+    const errorData = await response.text();
+    console.error('Bad request', errorData);
+    throw new Error('User already in chat');
+  } else if (response.status === 401) {
+    const errorData = await response.text();
+    console.error('Unauthorised', errorData);
+    throw new Error('Unauthorised. Please log in and try again.');
+  } else if (response.status === 404) {
+    const errorData = await response.text();
+    console.error('Not found', errorData);
+    throw new Error('User not found.');
+  } else {
+    const errorData = await response.text();
+    console.error('Server error', errorData);
+    throw new Error('Server error. Please try again later.');
+  }
 };
 
-export const removeUserFromChat = async (chat_id, user_id) => {
-    const session_token = await AsyncStorage.getItem('session_token');
+export const removeUserFromChat = async (chatId, userId) => {
+  const sessionToken = await AsyncStorage.getItem('session_token');
 
-    try {
-        const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}/user/${user_id}`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Authorization': session_token,
-            },
-        });
+  const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chatId}/user/${userId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Authorization': sessionToken,
+    },
+  });
 
-        if (response.status === 200) {
-            const data = await response.text();
-            await getChatDetails(chat_id);
-            return data;
-        } else if (response.status === 400) {
-            const errorData = await response.text();
-            console.error('Bad request', errorData);
-            throw new Error('Bad request. Please try again.');
-        } else if (response.status === 401) {
-            const errorData = await response.text();
-            console.error('Unauthorised', errorData);
-            throw new Error('Unauthorised. Please log in and try again.');
-        } else if (response.status === 404) {
-            const errorData = await response.text();
-            console.error('Not found', errorData);
-            throw new Error('Not found. Please try again with valid chat and user IDs.');
-        } else {
-            const errorData = await response.text();
-            console.error('Server error', errorData);
-            throw new Error('Server error. Please try again later.');
-        }
-    } catch (error) {
-        console.error('Error removing user from chat', error);
-        throw new Error('An error occurred while removing the user from the chat. Please try again.');
-    }
+  if (response.status === 200) {
+    const data = await response.text();
+    await getChatDetails(chatId);
+    return data;
+  } if (response.status === 400) {
+    const errorData = await response.text();
+    console.error('Bad request', errorData);
+    throw new Error('User has already been deleted from chat.');
+  } else if (response.status === 401) {
+    const errorData = await response.text();
+    console.error('Unauthorised', errorData);
+    throw new Error('Unauthorised. Please log in and try again.');
+  } else if (response.status === 404) {
+    const errorData = await response.text();
+    console.error('Not found', errorData);
+    throw new Error('Not found. Please try again with valid chat and user IDs.');
+  } else {
+    const errorData = await response.text();
+    console.error('Server error', errorData);
+    throw new Error('Server error. Please try again later.');
+  }
 };
-
