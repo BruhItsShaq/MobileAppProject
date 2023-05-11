@@ -28,16 +28,19 @@ export default class ChatScreen extends Component {
       contacts: [],
       messages: [],
       members: [],
+      drafts: [],
       refresh: false,
       newMessage: '',
       isLoading: true,
       userId: null,
       isButtonVisible: null,
+      isDraftButtonVisible: false,
       lastClickedMessageId: null,
       lastClickedMessageTimestamp: null,
       editingMessageId: null,
-      editingMessage: '', // added state for tracking the edited message text
+      editingMessage: '',
       isModalVisible: false,
+      isDraftModalVisible: false,
     };
 
     this.sendMessage = this.sendMessage.bind(this);
@@ -45,6 +48,11 @@ export default class ChatScreen extends Component {
     this.handleSaveButtonClick = this.handleSaveButtonClick.bind(this);
     this.handleMessageClick = this.handleMessageClick.bind(this);
     this.toggleChatModal = this.toggleChatModal.bind(this);
+    this.toggleDraftModal = this.toggleDraftModal.bind(this);
+    this.saveToDrafts = this.saveToDrafts.bind(this);
+    this.loadDrafts = this.loadDrafts.bind(this);
+    this.deleteDraft = this.deleteDraft.bind(this);
+    this.loadDraftToInput = this.loadDraftToInput.bind(this);
   }
 
   async componentDidMount() {
@@ -57,12 +65,14 @@ export default class ChatScreen extends Component {
     this.setState({ chatId, userId, chatName }, () => {
       this.loadMessages();
       this.loadContacts();
+      this.loadDrafts();
     });
 
     // Add a listener for the focus event
     this._unsubscribe = navigation.addListener('focus', () => {
       this.loadMessages();
       this.loadContacts();
+      this.loadDrafts();
     });
   }
 
@@ -179,16 +189,49 @@ export default class ChatScreen extends Component {
     }
   };
 
+  loadDrafts = async () => {
+    const { chatId } = this.state;
+    const draftKey = `draft_${chatId}`;
+    const existingDrafts = await AsyncStorage.getItem(draftKey);
+    const drafts = existingDrafts ? JSON.parse(existingDrafts) : [];
+    this.setState({ drafts });
+  };
+
+  saveToDrafts = async () => {
+    const { newMessage, chatId } = this.state;
+    const draftKey = `draft_${chatId}`;
+
+    try {
+      const existingDrafts = await AsyncStorage.getItem(draftKey);
+      const drafts = existingDrafts ? JSON.parse(existingDrafts) : [];
+      drafts.push(newMessage);
+      await AsyncStorage.setItem(draftKey, JSON.stringify(drafts));
+      this.setState({ newMessage: '', isDraftButtonVisible: false });
+      this.loadDrafts();
+    } catch (error) {
+      console.error('Error saving draft:', error);
+    }
+  };
+
+  deleteDraft = async (index) => {
+    const { chatId, drafts } = this.state;
+    const draftKey = `draft_${chatId}`;
+
+    try {
+      drafts.splice(index, 1);
+      await AsyncStorage.setItem(draftKey, JSON.stringify(drafts));
+      this.setState({ drafts });
+    } catch (error) {
+      console.error('Error deleting draft:', error);
+    }
+  };
+
   addUserToChat = async (userId) => {
     const { chatId, refresh } = this.state;
     try {
-      // const response =
       await addUserToChat(chatId, userId);
-      //  if (response.status === 200) {
-      // Call the loadMessages function to fetch updated chat details
       this.loadMessages();
       this.setState({ refresh: !refresh });
-      // }
     } catch (error) {
       console.log(error);
       this.setState({ error: error.message });
@@ -208,6 +251,14 @@ export default class ChatScreen extends Component {
       this.setState({ error: error.message });
     }
   };
+
+  loadDraftToInput(draft) {
+    this.setState({ newMessage: draft, isDraftModalVisible: false });
+  }
+
+  toggleDraftModal() {
+    this.setState((prevState) => ({ isDraftModalVisible: !prevState.isDraftModalVisible }));
+  }
 
   renderMessage = ({ item }) => {
     const { userId, editingMessageId, editingMessage } = this.state;
@@ -292,7 +343,7 @@ export default class ChatScreen extends Component {
     const { navigation } = this.props;
     const {
       messages, newMessage, isLoading, isModalVisible, userId, error, chatName, contacts,
-      members, refresh,
+      members, refresh, isDraftButtonVisible, isDraftModalVisible, drafts,
     } = this.state;
     console.log('messages:', messages);
     console.log('newMessage:', newMessage);
@@ -314,6 +365,13 @@ export default class ChatScreen extends Component {
           <Text>{chatName}</Text>
           <TouchableOpacity
             activeOpacity={0.7}
+            style={styles.draftButton}
+            onPress={this.toggleDraftModal}
+          >
+            <Icon name="bookmark" size={24} color="black" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={0.7}
             style={styles.plusButton}
             onPress={this.toggleChatModal}
           >
@@ -332,11 +390,19 @@ export default class ChatScreen extends Component {
           />
           {error && <Text style={styles.errorText}>{error}</Text>}
           <View style={styles.inputContainer}>
+            {isDraftButtonVisible && (
+            <TouchableOpacity style={styles.sendButton} onPress={this.saveToDrafts}>
+              <Icon name="bookmark" size={24} />
+            </TouchableOpacity>
+            )}
             <TextInput
               style={styles.input}
               placeholder="Type message here"
               value={newMessage}
-              onChangeText={(text) => this.setState({ newMessage: text })}
+              onChangeText={(text) => this.setState({
+                newMessage: text,
+                isDraftButtonVisible: text.length > 0,
+              })}
             />
             <TouchableOpacity style={styles.sendButton} onPress={this.sendMessage}>
               <Text style={styles.sendButtonText}>Send</Text>
@@ -388,6 +454,35 @@ export default class ChatScreen extends Component {
           </View>
         </Modal>
         )}
+        {isDraftModalVisible && (
+        <Modal animationType="slide" transparent visible={isDraftModalVisible}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Drafts</Text>
+              <FlatList
+                data={drafts}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({ item, index }) => (
+                  <View style={styles.memberItem}>
+                    <Text style={styles.memberName}>{item}</Text>
+                    <View style={styles.draftControls}>
+                      <TouchableOpacity onPress={() => this.loadDraftToInput(item)}>
+                        <Icon name="share-square-o" size={24} />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => this.deleteDraft(index)}>
+                        <Icon name="trash" size={24} color="red" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+              />
+              <TouchableOpacity style={styles.closeButton} onPress={this.toggleDraftModal}>
+                <Text style={styles.closeButtonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+        )}
       </View>
     );
   }
@@ -420,6 +515,14 @@ const styles = StyleSheet.create({
   plusButton: {
     position: 'absolute',
     right: 15,
+  },
+  draftButton: {
+    position: 'absolute',
+    right: 50,
+  },
+  draftControls: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   errorText: {
     color: 'red',
