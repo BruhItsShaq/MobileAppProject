@@ -19,12 +19,13 @@ export default class SignUp extends Component {
       submitted: false,
     };
 
+    // Bind the context of the function to the component
     this._onButtonPress = this._onButtonPress.bind(this);
   }
 
+  // Function to navigate to login
   navigateToLogin = () => {
     const { navigation } = this.props;
-
     navigation.navigate('Login');
   };
 
@@ -37,6 +38,7 @@ export default class SignUp extends Component {
     this.setState({ submitted: true });
     this.setState({ error: '' });
 
+    // Validate input using regex
     const FIRST_NAME_REGEX = /^[a-zA-Z]{2,20}$/;
     const LAST_NAME_REGEX = /^[a-zA-Z]{2,40}$/;
 
@@ -193,6 +195,7 @@ export default class SignUp extends Component {
   }
 }
 
+// PropTypes validation to ensure that the required props are being passed to the component
 SignUp.propTypes = {
   navigation: PropTypes.shape({
     navigate: PropTypes.func.isRequired,

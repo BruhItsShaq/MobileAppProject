@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const getContacts = async () => {

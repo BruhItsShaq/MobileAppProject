@@ -24,9 +24,9 @@ export default class HomeScreen extends Component {
     };
   }
 
+  // Navigation listener triggers functions everytime component comes into focus
   componentDidMount() {
     const { navigation } = this.props;
-
     this._unsubscribe = navigation.addListener('focus', () => {
       this.loadChats();
     });
@@ -36,6 +36,7 @@ export default class HomeScreen extends Component {
     this._unsubscribe();
   }
 
+  // Function to fetch chats and store them in array
   loadChats = async () => {
     try {
       const chatData = await fetchChats();
@@ -45,12 +46,13 @@ export default class HomeScreen extends Component {
     }
   };
 
+  // Function to navigate to chat screen. Passed chat id and name as parameters
   handleChatPress = (chat_id, chat_name) => {
     const { navigation } = this.props;
-
     navigation.navigate('Chat', { chatId: chat_id, chatName: chat_name });
   };
 
+  // Functions toggle visibilty of modals
   toggleCreateModal = () => {
     this.setState((prevState) => ({ isCreateModalVisible: !prevState.isCreateModalVisible }));
   };
@@ -63,13 +65,16 @@ export default class HomeScreen extends Component {
     this.setState({ newChatName: text });
   };
 
+  // Function for creating a new chat
   handleCreateChat = async () => {
     const { newChatName } = this.state;
+
+    // Validation
     if (!newChatName) {
       this.setState({ error: 'Chat name cannot be empty.Please enter a chat name' });
       return;
     }
-
+    // If creation is successful, add new chat to list of chat
     try {
       const chatResponse = await createChat(newChatName);
       const newChat = { chat_id: chatResponse.chat_id, name: newChatName };
@@ -83,6 +88,7 @@ export default class HomeScreen extends Component {
     }
   };
 
+  // Handle updating chat name
   handleUpdateChatName = async () => {
     const { chatIdToUpdate, updatedChatName, chats } = this.state;
 
@@ -91,11 +97,13 @@ export default class HomeScreen extends Component {
       return;
     }
 
+    // Validation
     if (!updatedChatName) {
       this.setState({ updateError: 'New chatname cannot be empty. Please enter a name.' });
       return;
     }
 
+    // If update is successful, updates the name in the list of chats using chat id
     try {
       await updateChatName(chatIdToUpdate, updatedChatName);
       const updatedChats = [...chats];
@@ -120,6 +128,8 @@ export default class HomeScreen extends Component {
     console.log(chats);
     return (
       <View style={styles.container}>
+        {/* Flatlist to display chats, with edit button
+        for chat name change */}
         <FlatList
           data={chats}
           renderItem={({ item }) => (
@@ -228,6 +238,7 @@ export default class HomeScreen extends Component {
   }
 }
 
+// PropTypes validation to ensure that the required props are being passed to the component
 HomeScreen.propTypes = {
   navigation: PropTypes.shape({
     navigate: PropTypes.func.isRequired,

@@ -30,6 +30,7 @@ export default class ProfileScreen extends Component {
     this.handleDelete = this.handleDelete.bind(this);
   }
 
+  // Navigation listener triggers functions everytime component comes into focus
   componentDidMount() {
     const { navigation } = this.props;
     this._unsubscribe = navigation.addListener('focus', () => {
@@ -38,6 +39,7 @@ export default class ProfileScreen extends Component {
     });
   }
 
+  // Remove listener when component unmounts
   componentWillUnmount() {
     this._unsubscribe();
   }
@@ -83,10 +85,12 @@ export default class ProfileScreen extends Component {
       });
   }
 
+  // Toggles isEditing to enable editing mode for profile
   handleEdit = () => {
     this.setState({ isEditing: true });
   };
 
+  // Responsible for validating and submitting updated user data
   handleSubmit = async () => {
     const {
       user, first_name, last_name, email, password,
@@ -123,6 +127,7 @@ export default class ProfileScreen extends Component {
     }
   };
 
+  // Handles logging user out, removes session token and navigate to login screen
   handleDelete = async () => {
     try {
       const response = await Logout();
@@ -137,6 +142,7 @@ export default class ProfileScreen extends Component {
     }
   };
 
+  // Handles cancelling editing process
   handleCancel = () => {
     const { user } = this.state;
     this.setState({
@@ -150,15 +156,14 @@ export default class ProfileScreen extends Component {
 
   backToLogin() {
     const { navigation } = this.props;
-
     navigation.navigate('Login');
   }
 
   render() {
     const {
-      user, error, isLoading, isEditing, first_name, last_name, email, password, photo, navigation,
+      user, error, isLoading, isEditing, first_name, last_name, email, password, photo,
     } = this.state;
-
+    const { navigation } = this.props;
     console.log('profile picture:', photo);
     return (
       <View style={styles.container}>
@@ -167,6 +172,7 @@ export default class ProfileScreen extends Component {
           <ActivityIndicator size="large" color="#0000ff" />
         ) : (
           <>
+            {/* Will check if isEditing is true or false */}
             {!isEditing ? (
               <>
                 {photo ? (
@@ -201,6 +207,7 @@ export default class ProfileScreen extends Component {
               </>
             ) : (
               <>
+                {/* Will show input fields if isEditing = true */}
                 <TextInput
                   style={styles.input}
                   placeholder="First Name"
@@ -242,6 +249,7 @@ export default class ProfileScreen extends Component {
   }
 }
 
+// PropTypes validation to ensure that the required props are being passed to the component
 ProfileScreen.propTypes = {
   navigation: PropTypes.shape({
     navigate: PropTypes.func.isRequired,

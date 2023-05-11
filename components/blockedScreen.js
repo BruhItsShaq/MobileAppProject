@@ -2,7 +2,7 @@
 /* eslint-disable no-use-before-define */
 import React, { Component } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity, Alert, StyleSheet, ActivityIndicator,
+  View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator,
 } from 'react-native';
 import PropTypes from 'prop-types';
 import { getBlockedContacts, unblockContact } from '../services/contactRequests';
@@ -17,8 +17,9 @@ export default class BlockedScreen extends Component {
     };
   }
 
+  // Navigation listener triggers functions everytime component comes into focus
   componentDidMount() {
-    const { navigation } = this.state;
+    const { navigation } = this.props;
     this._unsubscribe = navigation.addListener('focus', () => {
       this.getBlockedContacts();
     });
@@ -28,6 +29,7 @@ export default class BlockedScreen extends Component {
     this._unsubscribe();
   }
 
+  // Function to grab the blocked contacts
   getBlockedContacts = async () => {
     try {
       const data = await getBlockedContacts();
@@ -37,17 +39,17 @@ export default class BlockedScreen extends Component {
     }
   };
 
+  // Function to handle unblocking contacts
   handleUnblock = async (userId) => {
     try {
       await unblockContact(userId);
-      Alert.alert('Success', 'Contact unblocked successfully');
       this.getBlockedContacts();
     } catch (error) {
       console.error('Error unblocking contact', error);
-      Alert.alert('Error', 'An error occurred while unblocking the contact. Please try again later.');
     }
   };
 
+  // Function rendering a single blocked contact. Each item has a unblock button
   renderItem = ({ item }) => (
     <View style={styles.blockedContactItem}>
       <Text style={styles.contactName}>{`${item.first_name} ${item.last_name}`}</Text>
@@ -59,9 +61,10 @@ export default class BlockedScreen extends Component {
 
   render() {
     const {
-      blockedContacts, isLoading, error, navigation,
+      blockedContacts, isLoading, error,
     } = this.state;
 
+    const { navigation } = this.props;
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -76,7 +79,7 @@ export default class BlockedScreen extends Component {
           <FlatList
             data={blockedContacts}
             keyExtractor={(item) => item.user_id.toString()}
-            renderItem={this.renderItem()}
+            renderItem={this.renderItem}
           />
         )}
         {error && <Text>{error}</Text>}
@@ -85,10 +88,12 @@ export default class BlockedScreen extends Component {
   }
 }
 
+// PropTypes validation to ensure that the required props are being passed to the component
 BlockedScreen.propTypes = {
   navigation: PropTypes.shape({
     navigate: PropTypes.func.isRequired,
     addListener: PropTypes.func.isRequired,
+    goBack: PropTypes.func.isRequired,
   }).isRequired,
 };
 

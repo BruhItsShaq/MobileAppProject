@@ -23,28 +23,30 @@ export default class ContactsScreen extends Component {
     super(props);
 
     this.state = {
-      contacts: [],
-      contactPictures: {},
+      contacts: [], // Contacts Array
+      contactPictures: {}, // Object for mapping user ids to profile pic URLS
       error: '',
-      searchResults: [],
+      searchResults: [], // Search results array
       searchTerm: '',
       searchLimit: '20',
       searchOffset: '0',
     };
   }
 
+  // Navigation listener triggers functions everytime component comes into focus
   componentDidMount() {
     const { navigation } = this.props;
-
     this._unsubscribe = navigation.addListener('focus', () => {
       this.loadContacts();
     });
   }
 
+  // Remove listener when component unmounts
   componentWillUnmount() {
     this._unsubscribe();
   }
 
+  // Fetches profile picutre using user id
   // eslint-disable-next-line class-methods-use-this
   async get_profile_image(uId) {
     const sessionToken = await AsyncStorage.getItem('session_token');
@@ -61,9 +63,12 @@ export default class ContactsScreen extends Component {
       });
   }
 
+  // Functions fetches all contacts
   loadContacts = async () => {
     try {
+      // Calls getContacts to fetch contacts
       const contactData = await getContacts();
+      // After state is updated, loadContactsPictures function fetches profile picture for each contact
       this.setState({ contacts: contactData }, () => {
         this.loadContactsPictures();
       });
@@ -72,26 +77,34 @@ export default class ContactsScreen extends Component {
     }
   };
 
+  // Function fetches picture for each Contact
   loadContactsPictures = async () => {
     const { contacts } = this.state;
     try {
+      // Maps over the contact to create an array of Promises. Each Promise is a call
+      // to get the profile pictures for each contact using their user_id
       const contactPictures = await Promise.all(
         contacts.map(async (contact) => {
           const profilePicture = await this.get_profile_image(contact.user_id);
+          // Returns an object. Key = user_id and Value = profile picture URL
           return { [contact.user_id]: profilePicture };
         }),
       );
 
+      // Merges all objects in contactPictures array into one object
       const mergedContactPictures = Object.assign({}, ...contactPictures);
+      // Update state with merged object, mapping user ids to profile picture URLs
       this.setState({ contactPictures: mergedContactPictures });
     } catch (error) {
       console.error('Error getting profile photos for contacts', error);
     }
   };
 
+  // Function for handling adding contact
   handleAddContact = async (userId) => {
     try {
       const response = await addContact(userId);
+      // Check the response text from the server and setStates appropriately
       if (response === 'OK') {
         this.setState({ error: '' }, this.loadContacts);
       } else if (response === 'Already a contact') {
@@ -102,17 +115,21 @@ export default class ContactsScreen extends Component {
     }
   };
 
+  // Function for handling deletion of contact
   handleDeleteContact = async (userId) => {
     try {
       await deleteContact(userId);
+      // Load new contacts for updated list
       this.loadContacts();
     } catch (error) {
       this.setState({ error: error.message });
     }
   };
 
+  // Function for handling blocked contacts
   handleBlockContact = async (userId) => {
     try {
+      // Will send current contact to block list
       await blockContact(userId);
       this.loadContacts();
     } catch (error) {
@@ -120,10 +137,11 @@ export default class ContactsScreen extends Component {
     }
   };
 
+  // Will handle search functionality
   handleSearch = async () => {
     const { searchTerm, searchLimit, searchOffset } = this.state;
 
-    // Validation
+    // Validation for search
     const SEARCH_REGEX = /^[a-zA-Z\s-]+$/;
 
     if (searchTerm.trim() === '') {
@@ -141,6 +159,7 @@ export default class ContactsScreen extends Component {
         parseInt(searchOffset, 10),
       );
       this.setState({ searchResults: results, error: '' }, () => {
+        // Once state is updated, it fetches their profile picture
         this.searchResultPictures();
       });
     } catch (error) {
@@ -172,6 +191,7 @@ export default class ContactsScreen extends Component {
     this.setState({ contactPictures: updatedContactPictures });
   };
 
+  // Handle how to render single search items respectively
   renderSearchItem = ({ item }) => {
     const { contactPictures } = this.state;
     const profilePicture = contactPictures[item.user_id];
@@ -197,6 +217,7 @@ export default class ContactsScreen extends Component {
     );
   };
 
+  // Handles rendering a single contact respectively
   renderItem = ({ item }) => {
     const { contactPictures } = this.state;
     const profilePicture = contactPictures[item.user_id];
@@ -227,8 +248,9 @@ export default class ContactsScreen extends Component {
 
   render() {
     const {
-      contacts, error, searchResults, searchTerm, navigation,
+      contacts, error, searchResults, searchTerm,
     } = this.state;
+    const { navigation } = this.props;
 
     console.log('Search results:', searchResults);
     return (
@@ -265,6 +287,8 @@ export default class ContactsScreen extends Component {
           />
         </View>
 
+        {/* If the user is currently searching and results is greater > 0, then
+        render search items in flatlist, else render contacts */}
         {searchTerm && searchResults.length > 0 ? (
           <FlatList
             data={searchResults}
@@ -295,6 +319,7 @@ export default class ContactsScreen extends Component {
   }
 }
 
+// PropTypes validation to ensure that the required props are being passed to the component
 ContactsScreen.propTypes = {
   navigation: PropTypes.shape({
     navigate: PropTypes.func.isRequired,

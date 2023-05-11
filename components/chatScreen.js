@@ -56,19 +56,21 @@ export default class ChatScreen extends Component {
   }
 
   async componentDidMount() {
+    // Extract chatId and chatName from route params
     const { route } = this.props;
     const { chatId } = route.params;
     const { chatName } = route.params;
     const { navigation } = this.props;
     const userId = await AsyncStorage.getItem('user_id');
 
+    // Load messages, contacts and drafts for current chat
     this.setState({ chatId, userId, chatName }, () => {
       this.loadMessages();
       this.loadContacts();
       this.loadDrafts();
     });
 
-    // Add a listener for the focus event
+    // Navigation listener triggers functions everytime component comes into focus
     this._unsubscribe = navigation.addListener('focus', () => {
       this.loadMessages();
       this.loadContacts();
@@ -94,6 +96,7 @@ export default class ChatScreen extends Component {
     }
   };
 
+  // Fetches chat details of specific chat
   loadMessages = async () => {
     const { chatId, refresh } = this.state;
     try {
@@ -113,8 +116,10 @@ export default class ChatScreen extends Component {
     }
   };
 
+  // Function responsible for sending a message
   sendMessage = async () => {
     const { chatId, newMessage } = this.state;
+    // Error displayed if input box is empty
     if (newMessage.trim() === '') {
       this.setState({ error: 'Message cannot be empty.' });
       return;
@@ -122,6 +127,7 @@ export default class ChatScreen extends Component {
     try {
       const response = await sendMessage(chatId, newMessage);
       if (response.status === 200) {
+        // Will call load messages again to show new messages
         this.setState({ newMessage: ' ' });
         this.loadMessages();
       }
@@ -131,11 +137,13 @@ export default class ChatScreen extends Component {
     }
   };
 
+  // Handle deletion of message
   deleteMessage = async (messageId) => {
     const { chatId } = this.state;
     try {
       const response = await deleteMessage(chatId, messageId);
       if (response.status === 200) {
+        // If successful, messages loaded again
         this.loadMessages();
       }
     } catch (error) {
@@ -172,6 +180,7 @@ export default class ChatScreen extends Component {
     }
   };
 
+  // Handles the updating of a message
   handleSaveButtonClick = async () => {
     const { chatId } = this.state;
     const { editingMessageId, editingMessage } = this.state;
@@ -179,6 +188,8 @@ export default class ChatScreen extends Component {
       this.setState({ error: 'Edited message cannot be empty.' });
       return;
     }
+    // Updates message using chatid, message id and message
+    // On success, messages are loaded again
     try {
       await updateMessage(chatId, editingMessageId, editingMessage);
       await this.loadMessages();
@@ -189,6 +200,7 @@ export default class ChatScreen extends Component {
     }
   };
 
+  // Drafts loaded from AsyncStorage
   loadDrafts = async () => {
     const { chatId } = this.state;
     const draftKey = `draft_${chatId}`;
@@ -197,6 +209,7 @@ export default class ChatScreen extends Component {
     this.setState({ drafts });
   };
 
+  // Saved newMessages to drafts
   saveToDrafts = async () => {
     const { newMessage, chatId } = this.state;
     const draftKey = `draft_${chatId}`;
@@ -213,6 +226,7 @@ export default class ChatScreen extends Component {
     }
   };
 
+  // Handle deleting of draft
   deleteDraft = async (index) => {
     const { chatId, drafts } = this.state;
     const draftKey = `draft_${chatId}`;
@@ -226,6 +240,7 @@ export default class ChatScreen extends Component {
     }
   };
 
+  // Handle adding a user to the chat with their user id
   addUserToChat = async (userId) => {
     const { chatId, refresh } = this.state;
     try {
@@ -238,29 +253,33 @@ export default class ChatScreen extends Component {
     }
   };
 
+  // Removes user from the chat
   removeUserFromChat = async (userId) => {
     const { chatId, refresh } = this.state;
     try {
-      const response = await removeUserFromChat(chatId, userId);
-      if (response.status === 200) {
-        this.loadMessages();
-        this.setState({ refresh: !refresh });
-      }
+      await removeUserFromChat(chatId, userId);
+      // On success, will load messages and refresh flatlist
+      this.loadMessages();
+      this.setState({ refresh: !refresh });
     } catch (error) {
       console.log(error);
       this.setState({ error: error.message });
     }
   };
 
+  // loads draft into input box
   loadDraftToInput(draft) {
     this.setState({ newMessage: draft, isDraftModalVisible: false });
   }
 
+  // Toggles draft modal
   toggleDraftModal() {
     this.setState((prevState) => ({ isDraftModalVisible: !prevState.isDraftModalVisible }));
   }
 
   renderMessage = ({ item }) => {
+    // Determines whether message is sent by current user or not. Based on this
+    // it sets the style and username for the message
     const { userId, editingMessageId, editingMessage } = this.state;
     const authorId = item.author.user_id;
     const isMyMessage = parseInt(authorId, 10) === parseInt(userId, 10);
@@ -363,6 +382,7 @@ export default class ChatScreen extends Component {
             <Text>Back</Text>
           </TouchableOpacity>
           <Text>{chatName}</Text>
+          {/* Buttons to toggle member and draft modals */}
           <TouchableOpacity
             activeOpacity={0.7}
             style={styles.draftButton}
@@ -380,6 +400,7 @@ export default class ChatScreen extends Component {
         </View>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
           <FlatList
+          // render messages in functions, extra data to refresh flatlist
             extraData={refresh}
             data={messages.messages}
             keyExtractor={(item) => item.message_id.toString()}
@@ -390,6 +411,8 @@ export default class ChatScreen extends Component {
           />
           {error && <Text style={styles.errorText}>{error}</Text>}
           <View style={styles.inputContainer}>
+            {/* Will check to see if isDraftButtonVisible is true or false
+              and display bookmark button to save drafts */}
             {isDraftButtonVisible && (
             <TouchableOpacity style={styles.sendButton} onPress={this.saveToDrafts}>
               <Icon name="bookmark" size={24} />
@@ -410,6 +433,7 @@ export default class ChatScreen extends Component {
           </View>
         </KeyboardAvoidingView>
 
+        {/* Modal for rendering members */}
         {isModalVisible && (
         <Modal animationType="slide" transparent visible={isModalVisible}>
           <View style={styles.modalContainer}>
@@ -454,6 +478,7 @@ export default class ChatScreen extends Component {
           </View>
         </Modal>
         )}
+        {/* Modal for rendering drafts */}
         {isDraftModalVisible && (
         <Modal animationType="slide" transparent visible={isDraftModalVisible}>
           <View style={styles.modalContainer}>
@@ -487,6 +512,8 @@ export default class ChatScreen extends Component {
     );
   }
 }
+
+// PropTypes validation to ensure that the required props are being passed to the component
 ChatScreen.propTypes = {
   navigation: PropTypes.shape({
     navigate: PropTypes.func.isRequired,

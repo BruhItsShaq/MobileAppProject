@@ -35,11 +35,13 @@ export default class LoginScreen extends Component {
   //   }
   // }
 
+  // Function to navigate to the sign up screen
   navigateToSignUp = () => {
     const { navigation } = this.props;
     navigation.navigate('SignUp');
   };
 
+  // Function to handle the form submission
   async _onPressButton() {
     const { navigation } = this.props;
     const { email, password } = this.state;
@@ -47,6 +49,7 @@ export default class LoginScreen extends Component {
     this.setState({ submitted: true });
     this.setState({ error: '' });
 
+    // Validate input data with Email Validator and Regex
     if (!(email && password)) {
       this.setState({ error: 'Must enter email and password' });
       return;
@@ -174,6 +177,7 @@ export default class LoginScreen extends Component {
   }
 }
 
+// PropTypes validation to ensure that the required props are being passed to the component
 LoginScreen.propTypes = {
   navigation: PropTypes.shape({
     navigate: PropTypes.func.isRequired,
